@@ -115,8 +115,8 @@ Renderer.prototype.tick = function() {
 };
 
 Renderer.prototype.render = function(game) {
-  this.focusOn(game.player_.asCollider().x(),
-               game.player_.asCollider().y());
+  this.focusOn(game.player.asCollider().x(),
+               game.player.asCollider().y());
 
   this.context_.clearRect(0, 0, this.w_, this.h_);
   this.context_.fillStyle = 'rgb(0, 0, 25)';
@@ -127,4 +127,18 @@ Renderer.prototype.render = function(game) {
                           -Math.round(this.yOff_) + 0.5);
   game.render(this);
   this.context_.restore();
+
+  // Draw UI.
+  var curPossession = game.player.possession();
+  if (curPossession) {
+    this.context_.strokeStyle = 'rgb(255, 255, 255)';
+    this.context_.fillStyle = 'rgb(0, 0, 25)';
+    this.context_.lineWidth = 2;
+    this.context_.fillRect(50, 20, this.w_ - 100, 20);
+    this.context_.strokeRect(50, 20, this.w_ - 100, 20);
+
+    var ratio = curPossession.owner().strengthLeft();
+    this.context_.fillStyle = 'rgb(128, 23, 45)';
+    this.context_.fillRect(50, 20, ratio * (this.w_ - 100), 20);
+  }
 };

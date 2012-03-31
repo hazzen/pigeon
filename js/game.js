@@ -12,12 +12,12 @@ function Game(level) {
   this.level_ = level;
   this.keyDown_ = {};
   this.keyDownCounts_ = {};
-  this.player_ = new Player(this);
+  this.player = new Player(this);
 
-  this.ents_ = [this.player_];
+  this.ents_ = [this.player];
 
   var ps = [
-    new Possession(this, new geom.AABB(300, 150, 10, 15), 10)
+    new Possession(this, new geom.AABB(100, 100, 10, 15), 10)
   ];
   for (var i = 0; i < ps.length; ++i) {
     this.addEnt(ps[i]);
@@ -25,6 +25,7 @@ function Game(level) {
   var bm =[
     new Bman(this, 145, 22)
   ];
+  bm[0].setPossession(ps[0]);
   for (var i = 0; i < bm.length; ++i) {
     this.addEnt(bm[i]);
   }
@@ -397,6 +398,10 @@ Player.prototype.possessionGet = function(possession) {
   this.collider_.mass = 10 + possession.asCollider().mass;
 };
 
+Player.prototype.possession = function() {
+  return this.possession_;
+};
+
 // +----------------------------------------------------------------------------
 // | Possession
 Possession = function(game, aabb, mass) {
@@ -414,6 +419,14 @@ Possession.prototype.tick = function(t) {
     this.collider_.gravityAccel(t);
     this.collider_.tick(t);
   }
+};
+
+Possession.prototype.owner = function() {
+  return this.owner_;
+};
+
+Possession.prototype.setOwner = function(bman) {
+  this.owner_ = bman;
 };
 
 Possession.prototype.nabbed = function() {
@@ -456,8 +469,17 @@ Bman.Facing = {
   LEFT: -1
 };
 
+Bman.prototype.strengthLeft = function() {
+  if (this.strength_ > 0) {
+    return this.strength_ / this.initStrength_;
+  } else {
+    return 0;
+  }
+};
+
 Bman.prototype.setPossession = function(p) {
   this.possession_ = p;
+  p.setOwner(this);
 };
 
 Bman.prototype.asCollider = function() {
