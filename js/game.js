@@ -1,15 +1,15 @@
 // +----------------------------------------------------------------------------
 // | Game
-function Game(width, height) {
-  this.width_ = width;
-  this.height_ = height;
+function Game(level) {
+  this.level_ = level;
   this.keyDown_ = {};
   this.keyDownCounts_ = {};
   this.player_ = new Player(this);
 };
 
-Game.prototype.width = function() { return this.width_; };
-Game.prototype.height = function() { return this.height_; };
+Game.prototype.width = function() { return this.level_.width(); };
+Game.prototype.height = function() { return this.level_.height(); };
+Game.prototype.level = function() { return this.level_; };
 
 Game.prototype.keyPressed = function(chr) {
   return this.keyDown(chr) == 1;
@@ -44,6 +44,7 @@ Game.prototype.tick = function(t) {
 };
 
 Game.prototype.render = function(renderer) {
+  this.level_.render(renderer);
   this.player_.render(renderer);
 };
 
@@ -69,16 +70,18 @@ Player = function(game) {
 
 Player.MAX_V_X = 100;
 Player.MAX_V_Y = 100;
+Player.LENGTH = 20;
+Player.STROKE = 5;
 
 Player.prototype.render = function(renderer) {
   var ctx = renderer.context();
 
   // Body.
   ctx.strokeStyle = 'rgb(128, 128, 128)';
-  ctx.lineWidth = 5;
+  ctx.lineWidth = Player.STROKE;
   ctx.beginPath();
-  ctx.moveTo(this.x_ - 10, this.y_);
-  ctx.lineTo(this.x_ + 10, this.y_);
+  ctx.moveTo(this.x_ - Player.LENGTH / 2, this.y_);
+  ctx.lineTo(this.x_ + Player.LENGTH / 2, this.y_);
   ctx.stroke();
 
   // Wing.
@@ -104,10 +107,11 @@ Player.prototype.render = function(renderer) {
     var ym = Math.sin(theta);
 
     ctx.strokeStyle = 'rgb(96, 96, 96)';
-    ctx.lineWidth = 5;
+    ctx.lineWidth = Player.STROKE;
     ctx.beginPath();
     ctx.moveTo(this.x_, this.y_);
-    ctx.lineTo(this.x_ + xm * 10 * dir, this.y_ + ym * 10);
+    ctx.lineTo(this.x_ + xm * Player.LENGTH / 2 * dir,
+               this.y_ + ym * Player.LENGTH / 2);
     ctx.stroke();
   }
 };
@@ -131,10 +135,19 @@ Player.prototype.tick = function(t) {
 
   this.vx_ += vdx;
   this.vy_ += vdy;
-
-  this.x_ += this.vx_ * t;
-  this.y_ += this.vy_ * t;
   this.vy_ += this.mass_ * 9.8 * t;
+
+  var aabb = this.asAABB();
+  var levelCollisions = this.game_.level().collides(
+      aabb, this.vx_ * t, this.vy_ * t);
+  if (levelCollisions.xBlocks.length) {
+    this.vx_ = 0;
+  }
+  if (levelCollisions.yBlocks.length) {
+    this.vy_ = 0;
+  }
+  this.x_ += levelCollisions.dx;
+  this.y_ += levelCollisions.dy;
 
   if (this.x_ < 0) {
     this.x_ = 0;
@@ -153,4 +166,9 @@ Player.prototype.tick = function(t) {
 
   this.vx_ = Math.min(Player.MAX_V_X, Math.max(-Player.MAX_V_X, this.vx_));
   this.vy_ = Math.min(Player.MAX_V_Y, Math.max(-Player.MAX_V_Y, this.vy_));
+};
+
+Player.prototype.asAABB = function() {
+  return new geom.AABB(this.x_ - Player.LENGTH / 2, this.y_ - Player.STROKE / 2,
+                       Player.LENGTH, Player.STROKE);
 };
