@@ -64,6 +64,7 @@ Player = function(game) {
   this.vx_ = 0;
   this.vy_ = 0;
   this.mass_ = 10;
+  this.flapAnim_ = 0;
 };
 
 Player.MAX_V_X = 100;
@@ -72,12 +73,43 @@ Player.MAX_V_Y = 100;
 Player.prototype.render = function(renderer) {
   var ctx = renderer.context();
 
+  // Body.
   ctx.strokeStyle = 'rgb(128, 128, 128)';
   ctx.lineWidth = 5;
   ctx.beginPath();
   ctx.moveTo(this.x_ - 10, this.y_);
   ctx.lineTo(this.x_ + 10, this.y_);
   ctx.stroke();
+
+  // Wing.
+  if (this.flapAnim_) {
+    var dir = 1;
+    if (this.vx_ > 0) {
+      dir = -1;
+    }
+    if (this.game_.keyDown(Keys.LEFT)) {
+      dir = 1;
+    } else if (this.game_.keyDown(Keys.RIGHT)) {
+      dir = -1;
+    }
+    var theta = 0;
+    if (this.flapAnim_ < 10) {
+      theta = (this.flapAnim_ / 10) * (Math.PI / 3);
+    } else if (this.flapAnim_ < 15) {
+      theta = ((this.flapAnim_ - 15) / (10 - 15)) * (Math.PI / 3);
+    } else {
+      this.flapAnim_ = 0;
+    }
+    var xm = Math.cos(theta);
+    var ym = Math.sin(theta);
+
+    ctx.strokeStyle = 'rgb(96, 96, 96)';
+    ctx.lineWidth = 5;
+    ctx.beginPath();
+    ctx.moveTo(this.x_, this.y_);
+    ctx.lineTo(this.x_ + xm * 10 * dir, this.y_ + ym * 10);
+    ctx.stroke();
+  }
 };
 
 Player.prototype.tick = function(t) {
@@ -91,6 +123,10 @@ Player.prototype.tick = function(t) {
   }
   if (this.game_.keyPressed(Keys.UP)) {
     vdy -= 50;
+    this.flapAnim_ = 1;
+  }
+  if (this.flapAnim_) {
+    this.flapAnim_ += t * FRAME_RATE;
   }
 
   this.vx_ += vdx;
