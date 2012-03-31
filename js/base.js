@@ -1,4 +1,11 @@
-EPSILON = 0.0001;
+EPSILON = 0.001;
+
+UID = 1;
+UID_PROP_NAME = '__uuid_field__';
+
+function getUid(obj) {
+  return obj[UID_PROP_NAME] || (obj[UID_PROP_NAME] = ++UID);
+};
 
 function sgn(n) {
   return n < 0 ? -1 : (n > 0 ? 1 : 0);
@@ -142,6 +149,11 @@ geom.AABB = function(x, y, w, h) {
   this.p2 = new geom.Point(x + w, y + h);
 };
 
+geom.AABB.prototype.clone = function() {
+  return new geom.AABB(this.p1.x, this.p1.y,
+                       this.p2.x - this.p1.x, this.p2.y - this.p1.y);
+};
+
 geom.AABB.prototype.contains = function(point) {
   return (this.p1.x <= point.x && this.p1.y <= point.y &&
           this.p2.x >= point.x && this.p2.y >= point.y);
@@ -151,3 +163,8 @@ geom.AABB.prototype.overlaps = function(aabb) {
   return !(this.p1.x > aabb.p2.x || this.p2.x < aabb.p1.x ||
            this.p1.y > aabb.p2.y || this.p2.y < aabb.p1.y);
 };
+
+geom.AABB.prototype.toString = function() {
+  return '[(' + this.p1.x + ', ' + this.p1.y + ') --> (' +
+                this.p2.x + ', ' + this.p2.y + ')]';
+}

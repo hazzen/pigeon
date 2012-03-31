@@ -29,7 +29,7 @@ Level.prototype.collides = function(aabb, dx, dy) {
   var xBlocks = [];
   var yBlocks = [];
 
-  var ndx = dx;
+  var ntx = 1;
   if (dx != 0) {
     if (dx < 0) {
       aabb.p1.x += dx;
@@ -39,19 +39,21 @@ Level.prototype.collides = function(aabb, dx, dy) {
     for (var i = this.blocks_.length - 1; i >= 0; --i) {
       var block = this.blocks_[i].bounds;
       if (block.overlaps(aabb)) {
-        xBlocks.push(block);
+        var tx;
         if (dx > 0) {
-          ndx = Math.min(ndx, block.p1.x - aabb.p2.x - EPSILON);
+          tx = (block.p1.x - aabb.p2.x - EPSILON) / dx;
         } else {
-          ndx = Math.max(ndx, block.p2.x - aabb.p1.x + EPSILON);
+          tx = (block.p2.x - aabb.p1.x + EPSILON) / dx;
         }
+        xBlocks.push(block);
+        ntx = Math.min(tx, ntx);
       }
     }
-    aabb.p1.x -= dx - ndx;
-    aabb.p2.x -= dx - ndx;
+    aabb.p1.x -= dx - ntx * dx;
+    aabb.p2.x -= dx - ntx * dx;
   }
 
-  var ndy = dy;
+  var nty = 1;
   if (dy != 0) {
     if (dy < 0) {
       aabb.p1.y += dy;
@@ -61,19 +63,21 @@ Level.prototype.collides = function(aabb, dx, dy) {
     for (var i = this.blocks_.length - 1; i >= 0; --i) {
       var block = this.blocks_[i].bounds;
       if (block.overlaps(aabb)) {
-        yBlocks.push(block);
+        var ty;
         if (dy > 0) {
-          ndy = Math.min(ndy, block.p1.y - aabb.p2.y - EPSILON);
+          ty = (block.p1.y - aabb.p2.y - EPSILON) / dy;
         } else {
-          ndy = Math.max(ndy, block.p2.y - aabb.p1.y + EPSILON);
+          ty = (block.p2.y - aabb.p1.y + EPSILON) / dy;
         }
+        yBlocks.push(block);
+        nty = Math.min(ty, nty);
       }
     }
   }
 
   collisions.xBlocks = xBlocks;
   collisions.yBlocks = yBlocks;
-  collisions.dx = ndx;
-  collisions.dy = ndy;
+  collisions.dtx = ntx;
+  collisions.dty = nty;
   return collisions;
 };
