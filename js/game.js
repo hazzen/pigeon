@@ -1,19 +1,58 @@
 // +----------------------------------------------------------------------------
+// | EntKind
+EntKind = {
+  PLAYER: 1,
+  BMAN: 2,
+  POS: 3
+};
+
+// +----------------------------------------------------------------------------
 // | Game
 function Game(level) {
   this.level_ = level;
   this.keyDown_ = {};
   this.keyDownCounts_ = {};
   this.player_ = new Player(this);
-  this.possession_ = new Possession(this, new geom.AABB(300, 150, 10, 15), 10);
-  this.ents_ = [this.possession_, this.player_];
-  this.bman_ = new Bman(this, 145, 22);
+
+  this.ents_ = [this.player_];
+
+  var ps = [
+    new Possession(this, new geom.AABB(300, 150, 10, 15), 10)
+  ];
+  for (var i = 0; i < ps.length; ++i) {
+    this.addEnt(ps[i]);
+  }
+  var bm =[
+    new Bman(this, 145, 22)
+  ];
+  for (var i = 0; i < bm.length; ++i) {
+    this.addEnt(bm[i]);
+  }
 };
 
 Game.prototype.width = function() { return this.level_.width(); };
 Game.prototype.height = function() { return this.level_.height(); };
 Game.prototype.level = function() { return this.level_; };
 Game.prototype.ents = function() { return this.ents_; };
+
+Game.prototype.addEnt = function(ent) {
+  for (var i = 0; i < this.ents_.length; ++i) {
+    if (this.ents_[i] == null) {
+      this.ents_[i] = ent;
+      return;
+    }
+  }
+  this.ents_.push(ent);
+};
+
+Game.prototype.removeEnt = function(ent) {
+  for (var i = 0; i < this.ents_.length; ++i) {
+    if (this.ents_[i] == ent) {
+      this.ents_[i] = null;
+      return;
+    }
+  }
+};
 
 Game.prototype.keyPressed = function(chr) {
   return this.keyDown(chr) == 1;
@@ -44,21 +83,19 @@ Game.prototype.tickHandleInput_ = function(t) {
 
 Game.prototype.tick = function(t) {
   this.tickHandleInput_(t);
-  for (var i = 0; i < this.ents_.length; ++i) {
-    this.ents_[i].tick(t);
-  }
-  if (this.bman_) {
-    this.bman_.tick(t);
+  for (var i = this.ents_.length - 1; i >= 0; --i) {
+    if (this.ents_[i]) {
+      this.ents_[i].tick(t);
+    }
   }
 };
 
 Game.prototype.render = function(renderer) {
   this.level_.render(renderer);
-  if (this.bman_) {
-    this.bman_.render(renderer);
-  }
-  for (var i = 0; i < this.ents_.length; ++i) {
-    this.ents_[i].render(renderer);
+  for (var i = this.ents_.length - 1; i >= 0; --i) {
+    if (this.ents_[i]) {
+      this.ents_[i].render(renderer);
+    }
   }
 };
 
@@ -133,8 +170,8 @@ Collider.prototype.collideOthers = function(others, t) {
     }
     for (var i = others.length - 1; i >= 0; --i) {
       var otherCollider = others[i].asCollider();
-      if (!(getUid(otherCollider) in this.ignores) &&
-          otherCollider && otherCollider != this) {
+      if (otherCollider && !(getUid(otherCollider) in this.ignores) &&
+          otherCollider != this) {
         var otherAabb = otherCollider.aabb;
         if (thisAabb.overlaps(otherAabb)) {
           var tx;
@@ -163,8 +200,8 @@ Collider.prototype.collideOthers = function(others, t) {
     }
     for (var i = others.length - 1; i >= 0; --i) {
       var otherCollider = others[i].asCollider();
-      if (!(getUid(otherCollider) in this.ignores) &&
-          otherCollider && otherCollider != this) {
+      if (otherCollider && !(getUid(otherCollider) in this.ignores) &&
+          otherCollider != this) {
         var otherAabb = otherCollider.aabb;
         if (thisAabb.overlaps(otherAabb)) {
           var ty;
@@ -232,6 +269,10 @@ Player.MAX_V_X = 100;
 Player.MAX_V_Y = 300;
 Player.LENGTH = 20;
 Player.STROKE = 5;
+
+Player.prototype.getKind = function() {
+  return EntKind.PLAYER;
+};
 
 Player.prototype.render = function(renderer) {
   var ctx = renderer.context();
@@ -321,8 +362,8 @@ Player.prototype.tick = function(t) {
     }
   } else {
     for (var i = 0; i < collisions.game.yOthers.length; ++i) {
-      if (collisions.game.yOthers[i] == this.game_.possession_) {
-        this.possessionHit(this.game_.possession_);
+      if (collisions.game.yOthers[i].getKind() == EntKind.POS) {
+        this.possessionHit(collisions.game.yOthers[i]);
       }
     }
   }
@@ -379,6 +420,10 @@ Possession.prototype.nabbed = function() {
   this.falling_ = false;
 };
 
+Possession.prototype.getKind = function() {
+  return EntKind.POS;
+};
+
 Possession.prototype.render = function(renderer) {
   if (!renderer.boxOnScreen(this.collider_.aabb)) {
     renderer.drawIndicator(IMGS[IMG.HEART_THUMB],
@@ -401,7 +446,7 @@ Bman = function(game, x, y, opt_facing, opt_strength) {
   this.x_ = x;
   this.y_ = y;
   this.facing_ = opt_facing || Bman.Facing.RIGHT;
-  this.strength_ = opt_strength || 10;
+  this.initStrength_ = this.strength_ = opt_strength || 10;
 
   this.sprite_ = IMGS[IMG.BUSINESS_MAN];
 };
@@ -409,6 +454,21 @@ Bman = function(game, x, y, opt_facing, opt_strength) {
 Bman.Facing = {
   RIGHT: 1,
   LEFT: -1
+};
+
+Bman.prototype.setPossession = function(p) {
+  this.possession_ = p;
+};
+
+Bman.prototype.asCollider = function() {
+  if (this.falling_) {
+    return this.falling_;
+  }
+  return null;
+};
+
+Bman.prototype.getKind = function() {
+  return EntKind.BMAN;
 };
 
 Bman.prototype.render = function(renderer) {
