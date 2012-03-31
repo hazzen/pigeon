@@ -119,7 +119,7 @@ Renderer.prototype.render = function(game) {
                game.player.asCollider().y());
 
   this.context_.clearRect(0, 0, this.w_, this.h_);
-  this.context_.fillStyle = 'rgb(0, 0, 25)';
+  this.context_.fillStyle = 'rgb(50, 50, 40)';
   this.context_.fillRect(0, 0, this.w_, this.h_);
 
   this.context_.save();

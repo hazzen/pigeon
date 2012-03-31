@@ -246,6 +246,7 @@ Collider.prototype.tick = function(t) {
   }
   if (levelCollisions.yBlocks.length || gameCollisions.yOthers.length) {
     this.vy = 0;
+    this.vx *= 0.9;
   }
 
   return {
@@ -325,6 +326,9 @@ Player.prototype.asCollider = function() {
 };
 
 Player.prototype.tick = function(t) {
+  if (!this.game_.keyDown('z')) {
+    this.justDropped_ = false;
+  }
   var vdx = 0;
   var vdy = 0;
   if (this.game_.keyDown(Keys.LEFT)) {
@@ -367,6 +371,9 @@ Player.prototype.tick = function(t) {
     var owner = this.possession_.owner();
     if (owner && owner.acceptDelivery(this.possession_)) {
       this.possession_ = null;
+    } else if (this.game_.keyPressed('z')) {
+      this.possessionDrop();
+      this.justDropped_ = true;
     }
   } else {
     for (var i = 0; i < collisions.game.yOthers.length; ++i) {
@@ -387,11 +394,14 @@ Player.prototype.possessionHit = function(possession) {
     pickupZone.p1.x += (w - 10) / 2;
     pickupZone.p2.x -= (w - 10) / 2;
   }
-  pickupZone.p1.y -= 5;
-  pickupZone.p2.y = pickupZone.p1.y + 10;
+  pickupZone.p1.y -= 10;
+  pickupZone.p2.y = pickupZone.p1.y + 20;
 
   if (pickupZone.overlaps(this.collider_.aabb)) {
-    this.possessionGet(possession);
+    possession.glow();
+    if (this.game_.keyDown('z') && !this.justDropped_) {
+      this.possessionGet(possession);
+    }
   }
 };
 
@@ -405,6 +415,19 @@ Player.prototype.possessionGet = function(possession) {
   this.collider_.mass = 10 + possession.asCollider().mass;
 };
 
+Player.prototype.possessionDrop = function() {
+  var possession = this.possession_;
+
+  delete possession.asCollider().ignores[getUid(this.collider_)];
+  delete this.collider_.ignores[getUid(possession.asCollider())];
+  this.collider_.mass = 10;
+  possession.collider_.vx = this.collider_.vx;
+  possession.collider_.vy = this.collider_.vy;
+  possession.dropped();
+
+  this.possession_ = null;
+};
+
 Player.prototype.possession = function() {
   return this.possession_;
 };
@@ -415,6 +438,7 @@ Possession = function(game, aabb, mass) {
   this.game_ = game;
   this.falling_ = true;
   this.collider_ = new Collider(game, aabb, 0, 0, mass);
+  this.glowing_ = 0;
 };
 
 Possession.prototype.asCollider = function() {
@@ -426,6 +450,7 @@ Possession.prototype.tick = function(t) {
     this.collider_.gravityAccel(t);
     this.collider_.tick(t);
   }
+  this.glowing_ -= t;
 };
 
 Possession.prototype.owner = function() {
@@ -437,11 +462,20 @@ Possession.prototype.setOwner = function(bman) {
 };
 
 Possession.prototype.nabbed = function() {
+  this.glowing_ = 0;
   this.falling_ = false;
+};
+
+Possession.prototype.dropped = function() {
+  this.falling_ = true;
 };
 
 Possession.prototype.getKind = function() {
   return EntKind.POS;
+};
+
+Possession.prototype.glow = function(on) {
+  this.glowing_ = 0.2;
 };
 
 Possession.prototype.render = function(renderer) {
@@ -450,12 +484,19 @@ Possession.prototype.render = function(renderer) {
         this.collider_.x(), this.collider_.y());
   } else {
     var ctx = renderer.context();
-    ctx.fillStyle = 'rgb(34, 154, 28)';
+    ctx.fillStyle = 'rgb(145, 180, 134)';
     var x = this.collider_.aabb.p1.x;
     var y = this.collider_.aabb.p1.y;
     var w = this.collider_.aabb.p2.x - x;
     var h = this.collider_.aabb.p2.y - y;
     ctx.fillRect(x, y, w, h);
+
+    if (this.glowing_ > 0) {
+      // dxhr, baby.
+      ctx.lineWidth = 3;
+      ctx.strokeStyle = 'rgb(197, 153, 64)';
+      ctx.strokeRect(x, y, w, h);
+    }
   }
 };
 
