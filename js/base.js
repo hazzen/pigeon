@@ -74,3 +74,10 @@ Rgb.prototype.toCssString = function() {
 Rgb.prototype.toRgbString = function() {
   return 'rgba(' + this.r + ',' + this.g + ',' + this.b + ',' + (this.a / 255) + ')';
 };
+
+Keys = {
+  LEFT: 37,
+  UP: 38,
+  RIGHT: 39,
+  DOWN: 40
+};

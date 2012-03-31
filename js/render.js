@@ -34,6 +34,8 @@ Renderer.prototype.context = function() {
 
 Renderer.prototype.render = function(game) {
   this.context_.clearRect(0, 0, this.w_, this.h_);
+  this.context_.fillStyle = 'rgb(0, 0, 0)';
+  this.context_.fillRect(0, 0, this.w_, this.h_);
 
   this.context_.save();
   this.context_.translate(-Math.round(this.xOff_) + 0.5,

@@ -3,6 +3,7 @@
 function Game() {
   this.keyDown_ = {};
   this.keyDownCounts_ = {};
+  this.player_ = new Player();
 };
 
 Game.prototype.keyPressed = function(chr) {
@@ -34,14 +35,22 @@ Game.prototype.tickHandleInput_ = function(t) {
 
 Game.prototype.tick = function(t) {
   this.tickHandleInput_(t);
-
+  if (this.keyDown(Keys.LEFT)) {
+    this.player_.x_ -= 2;
+  }
+  if (this.keyDown(Keys.RIGHT)) {
+    this.player_.x_ += 2;
+  }
+  if (this.keyDown(Keys.UP)) {
+    this.player_.y_ -= 2;
+  }
+  if (this.keyDown(Keys.DOWN)) {
+    this.player_.y_ += 2;
+  }
 };
 
 Game.prototype.render = function(renderer) {
-  var ctx = renderer.context();
-  var fillColor = 'rgb(255, 0, 255)';
-  ctx.fillStyle = fillColor;
-  ctx.fillRect(0, 0, 25, 25);
+  this.player_.render(renderer);
 };
 
 Game.prototype.onKeyDown = function(event) {
@@ -50,4 +59,22 @@ Game.prototype.onKeyDown = function(event) {
 
 Game.prototype.onKeyUp = function(event) {
   this.keyDown_[event.keyCode] = false;
+};
+
+// +----------------------------------------------------------------------------
+// | Player
+Player = function() {
+  this.x_ = 50;
+  this.y_ = 50;
+};
+
+Player.prototype.render = function(renderer) {
+  var ctx = renderer.context();
+
+  ctx.strokeStyle = 'rgb(128, 128, 128)';
+  ctx.lineWidth = 5;
+  ctx.beginPath();
+  ctx.moveTo(this.x_ - 10, this.y_);
+  ctx.lineTo(this.x_ + 10, this.y_);
+  ctx.stroke();
 };
