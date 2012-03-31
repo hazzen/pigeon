@@ -44,42 +44,36 @@ Renderer.prototype.context = function() {
 Renderer.prototype.tick = function() {
   if (this.xt_ == undefined) return;
 
-  if (this.xt_ - 150 < this.xOff_) {
-    if (this.xv_ >= 0) {
-      this.xv_ = -0.25;
-    }
-    this.xv_ -= 0.25;
-  } else if (this.xt_ + 150 > this.xOff_ + this.w_) {
-    if (this.xv_ <= 0) {
-      this.xv_ = 0.25;
-    }
-    this.xv_ += 0.25;
+  var cx = this.xOff_ + this.w_ / 2;
+  var ncx = Math.abs(this.xt_ - cx) < this.w_ / 8;
+  var ex1d = (this.xt_ - this.w_ / 6) - this.xOff_;
+  var ex2d = -(this.xt_ + this.w_ / 6) + (this.xOff_ + this.w_);
+  if (ex1d < 0) {
+    this.xv_ = ex1d;
+  } else if (ex2d < 0) {
+    this.xv_ = -ex2d;
   }
-  this.xv_ = Math.max(-10, Math.min(10, this.xv_));
-  this.xv_ -= sgn(this.xv_) * 0.15
-  if (Math.abs(this.xv_) <= 0.3) {
+  if (ncx) {
     this.xv_ = 0;
   }
 
-  if (this.yt_ - 150 < this.yOff_) {
-    if (this.yv_ >= 0) {
-      this.yv_ = -0.25;
-    }
-    this.yv_ -= 0.25;
-  } else if (this.yt_ + 150 > this.yOff_ + this.h_) {
-    if (this.yv_ <= 0) {
-      this.yv_ = 0.25;
-    }
-    this.yv_ += 0.25;
+  var cy = this.yOff_ + this.h_ / 2;
+  var ncy = Math.abs(this.yt_ - cy) < this.h_ / 8;
+  var ey1d = (this.yt_ - this.h_ / 6) - this.yOff_;
+  var ey2d = -(this.yt_ + this.h_ / 6) + (this.yOff_ + this.h_);
+  if (ey1d < 0) {
+    this.yv_ = ey1d;
+  } else if (ey2d < 0) {
+    this.yv_ = -ey2d;
   }
-  this.yv_ = Math.max(-10, Math.min(10, this.yv_));
-  this.yv_ -= sgn(this.yv_) * 0.15
-  if (Math.abs(this.yv_) <= 0.3) {
+  if (ncy) {
     this.yv_ = 0;
   }
 
   this.xOff_ += this.xv_;
   this.yOff_ += this.yv_;
+  this.xv_ -= sgn(this.xv_) * 0.15
+  this.yv_ -= sgn(this.yv_) * 0.15
 };
 
 Renderer.prototype.render = function(game) {
