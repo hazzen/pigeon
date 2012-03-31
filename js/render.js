@@ -87,7 +87,7 @@ Renderer.prototype.render = function(game) {
                game.player_.asCollider().y());
 
   this.context_.clearRect(0, 0, this.w_, this.h_);
-  this.context_.fillStyle = 'rgb(0, 0, 0)';
+  this.context_.fillStyle = 'rgb(0, 0, 25)';
   this.context_.fillRect(0, 0, this.w_, this.h_);
 
   this.context_.save();

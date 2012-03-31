@@ -7,6 +7,7 @@ function Game(level) {
   this.player_ = new Player(this);
   this.possession_ = new Possession(this, new geom.AABB(300, 150, 10, 15), 10);
   this.ents_ = [this.possession_, this.player_];
+  this.bman_ = new geom.Point(145, 22);
 };
 
 Game.prototype.width = function() { return this.level_.width(); };
@@ -50,6 +51,10 @@ Game.prototype.tick = function(t) {
 
 Game.prototype.render = function(renderer) {
   this.level_.render(renderer);
+  if (this.bman_) {
+    var ctx = renderer.context();
+    ctx.drawImage(IMGS[IMG.BUSINESS_MAN], this.bman_.x, this.bman_.y);
+  }
   for (var i = 0; i < this.ents_.length; ++i) {
     this.ents_[i].render(renderer);
   }

@@ -1,10 +1,49 @@
 FRAME_RATE = 60;
 
+function ImgLoader() {
+  this.images_ = [];
+  this.done_ = 0;
+  this.allLoaded_ = function() {};
+  this.loaded_ = {};
+};
+
+ImgLoader.prototype.load = function(src) {
+  var img = new Image();
+  this.images_.push(img);
+  img.onload = bind(this, this.oneLoaded_, img, src);
+  img.src = src;
+};
+
+ImgLoader.prototype.whenDone = function(fn) {
+  this.allLoaded_ = fn;
+  if (this.done_ == this.images_.length && this.images_.length) {
+    fn(this.loaded_);
+  }
+};
+
+ImgLoader.prototype.oneLoaded_ = function(img, src) {
+  this.done_++;
+  this.loaded_[src] = img;
+  if (this.done_ == this.images_.length) {
+    this.allLoaded_(this.loaded_);
+  }
+};
+
+IMG = {
+  BUSINESS_MAN: 'res/bman.png'
+};
+
+IMGS = {};
+
 $(document).ready(function() {
   var gameElem = document.getElementById('game');
   var renderer = new Renderer(gameElem, 640, 480);
   var level = new Level(640, 480);
 
+  var loader = new ImgLoader();
+  for (var img in IMG) {
+    loader.load(IMG[img])
+  }
   // Obstacles.
 
   // +--------------------------------------------------------------------------
@@ -31,19 +70,22 @@ $(document).ready(function() {
   $(gameElem).keyup(bind(game, game.onKeyUp));
 
   var lastFrame = new Date().getTime();
-  (function renderLoop() {
+  loader.whenDone(function(loaded) {
+    IMGS = loaded;
+    (function renderLoop() {
 
-    var now = new Date().getTime();
-    var numFrames = Math.floor((now - lastFrame) / (1000 / FRAME_RATE));
-    lastFrame = lastFrame + numFrames * (1000 / FRAME_RATE);
-    if (numFrames > 1) {
-      window.console.log(now, lastFrame, numFrames);
-    }
-    for (var i = 0; i < numFrames; i++) {
-      game.tick(1 / FRAME_RATE);
-    }
-    renderer.tick();
-    renderer.render(game);
-    requestAnimFrame(renderLoop, this.canvasElem_);
-  })();
+      var now = new Date().getTime();
+      var numFrames = Math.floor((now - lastFrame) / (1000 / FRAME_RATE));
+      lastFrame = lastFrame + numFrames * (1000 / FRAME_RATE);
+      if (numFrames > 1) {
+        window.console.log(now, lastFrame, numFrames);
+      }
+      for (var i = 0; i < numFrames; i++) {
+        game.tick(1 / FRAME_RATE);
+      }
+      renderer.tick();
+      renderer.render(game);
+      requestAnimFrame(renderLoop, this.canvasElem_);
+    })();
+  });
 });
