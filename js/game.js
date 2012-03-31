@@ -1,10 +1,15 @@
 // +----------------------------------------------------------------------------
 // | Game
-function Game() {
+function Game(width, height) {
+  this.width_ = width;
+  this.height_ = height;
   this.keyDown_ = {};
   this.keyDownCounts_ = {};
-  this.player_ = new Player();
+  this.player_ = new Player(this);
 };
+
+Game.prototype.width = function() { return this.width_; };
+Game.prototype.height = function() { return this.height_; };
 
 Game.prototype.keyPressed = function(chr) {
   return this.keyDown(chr) == 1;
@@ -35,18 +40,7 @@ Game.prototype.tickHandleInput_ = function(t) {
 
 Game.prototype.tick = function(t) {
   this.tickHandleInput_(t);
-  if (this.keyDown(Keys.LEFT)) {
-    this.player_.x_ -= 2;
-  }
-  if (this.keyDown(Keys.RIGHT)) {
-    this.player_.x_ += 2;
-  }
-  if (this.keyDown(Keys.UP)) {
-    this.player_.y_ -= 2;
-  }
-  if (this.keyDown(Keys.DOWN)) {
-    this.player_.y_ += 2;
-  }
+  this.player_.tick(t);
 };
 
 Game.prototype.render = function(renderer) {
@@ -63,10 +57,17 @@ Game.prototype.onKeyUp = function(event) {
 
 // +----------------------------------------------------------------------------
 // | Player
-Player = function() {
+Player = function(game) {
+  this.game_ = game;
   this.x_ = 50;
   this.y_ = 50;
+  this.vx_ = 0;
+  this.vy_ = 0;
+  this.mass_ = 10;
 };
+
+Player.MAX_V_X = 100;
+Player.MAX_V_Y = 100;
 
 Player.prototype.render = function(renderer) {
   var ctx = renderer.context();
@@ -77,4 +78,43 @@ Player.prototype.render = function(renderer) {
   ctx.moveTo(this.x_ - 10, this.y_);
   ctx.lineTo(this.x_ + 10, this.y_);
   ctx.stroke();
+};
+
+Player.prototype.tick = function(t) {
+  var vdx = 0;
+  var vdy = 0;
+  if (this.game_.keyDown(Keys.LEFT)) {
+    vdx -= 2;
+  }
+  if (this.game_.keyDown(Keys.RIGHT)) {
+    vdx += 2;
+  }
+  if (this.game_.keyPressed(Keys.UP)) {
+    vdy -= 50;
+  }
+
+  this.vx_ += vdx;
+  this.vy_ += vdy;
+
+  this.x_ += this.vx_ * t;
+  this.y_ += this.vy_ * t;
+  this.vy_ += this.mass_ * 9.8 * t;
+
+  if (this.x_ < 0) {
+    this.x_ = 0;
+    this.vx_ = 0;
+  } else if (this.x_ > this.game_.width()) {
+    this.x_ = this.game_.width();
+    this.vx_ = 0;
+  }
+  if (this.y_ < 0) {
+    this.y_ = 0;
+    this.vy_ = 0;
+  } else if (this.y_ > this.game_.height()) {
+    this.y_ = this.game_.height();
+    this.vy_ = 0;
+  }
+
+  this.vx_ = Math.min(Player.MAX_V_X, Math.max(-Player.MAX_V_X, this.vx_));
+  this.vy_ = Math.min(Player.MAX_V_Y, Math.max(-Player.MAX_V_Y, this.vy_));
 };

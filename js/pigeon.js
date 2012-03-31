@@ -1,6 +1,6 @@
 $(document).ready(function() {
   var renderer = new Renderer(document.getElementById('game'), 640, 480);
-  var game = new Game();
+  var game = new Game(640, 480);
 
   $(window).keydown(bind(game, game.onKeyDown));
   $(window).keyup(bind(game, game.onKeyUp));
