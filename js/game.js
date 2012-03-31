@@ -84,6 +84,8 @@ Game.prototype.tickHandleInput_ = function(t) {
 
 Game.prototype.tick = function(t) {
   this.tickHandleInput_(t);
+  if (this.paused) return;
+
   for (var i = this.ents_.length - 1; i >= 0; --i) {
     if (this.ents_[i]) {
       this.ents_[i].tick(t);

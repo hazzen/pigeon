@@ -73,6 +73,10 @@ $(document).ready(function() {
     $(gameElem).keydown(bind(game, game.onKeyDown));
     $(gameElem).keyup(bind(game, game.onKeyUp));
 
+    $(gameElem).blur(function() {
+      game.paused = true;
+    });
+
     var lastFrame = new Date().getTime();
     (function renderLoop() {
 
@@ -81,12 +85,29 @@ $(document).ready(function() {
       lastFrame = lastFrame + numFrames * (1000 / FRAME_RATE);
       if (numFrames > 1) {
         window.console.log(now, lastFrame, numFrames);
+        if (numFrames > 5) {
+          numFrames = 1;
+        }
       }
       for (var i = 0; i < numFrames; i++) {
         game.tick(1 / FRAME_RATE);
       }
-      renderer.tick();
+      if (!game.paused) {
+        renderer.tick();
+      }
       renderer.render(game);
+      if (game.paused) {
+        var ctx = renderer.context();
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+        ctx.fillRect(0, 0, renderer.width(), renderer.height());
+        ctx.font = 'bold 12px sans-serif';
+        ctx.fillStyle = '#ccc';
+        ctx.fillText('P A U S E D', 50, 30);
+        ctx.fillText('press z to continue', 50, 45);
+        if (game.keyDown('z')) {
+          game.paused = false;
+        }
+      }
       requestAnimFrame(renderLoop, this.canvasElem_);
     })();
   });
