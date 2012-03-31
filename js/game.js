@@ -170,6 +170,7 @@ Collider.prototype.collideOthers = function(others, t) {
       thisAabb.p2.x += dx;
     }
     for (var i = others.length - 1; i >= 0; --i) {
+      if (others[i] == null) continue;
       var otherCollider = others[i].asCollider();
       if (otherCollider && !(getUid(otherCollider) in this.ignores) &&
           otherCollider != this) {
@@ -200,6 +201,7 @@ Collider.prototype.collideOthers = function(others, t) {
       thisAabb.p2.y += dy;
     }
     for (var i = others.length - 1; i >= 0; --i) {
+      if (others[i] == null) continue;
       var otherCollider = others[i].asCollider();
       if (otherCollider && !(getUid(otherCollider) in this.ignores) &&
           otherCollider != this) {
@@ -361,6 +363,11 @@ Player.prototype.tick = function(t) {
       this.collider_.aabb.p1.y -= (t * vy - pcs.dy);
       this.collider_.aabb.p2.y -= (t * vy - pcs.dy);
     }
+
+    var owner = this.possession_.owner();
+    if (owner && owner.acceptDelivery(this.possession_)) {
+      this.possession_ = null;
+    }
   } else {
     for (var i = 0; i < collisions.game.yOthers.length; ++i) {
       if (collisions.game.yOthers[i].getKind() == EntKind.POS) {
@@ -462,6 +469,7 @@ Bman = function(game, x, y, opt_facing, opt_strength) {
   this.initStrength_ = this.strength_ = opt_strength || 10;
 
   this.sprite_ = IMGS[IMG.BUSINESS_MAN];
+  this.aabb_ = new geom.AABB(x, y, this.sprite_.width, this.sprite_.height);
 };
 
 Bman.Facing = {
@@ -487,6 +495,21 @@ Bman.prototype.asCollider = function() {
     return this.falling_;
   }
   return null;
+};
+
+Bman.prototype.acceptDelivery = function(p) {
+  if (this.possession_ != p) {
+    return false;
+  }
+  if (this.falling_) {
+    return false;
+  }
+  var good = this.aabb_.overlaps(p.asCollider().aabb);
+  if (good) {
+    this.game_.removeEnt(this);
+    this.game_.removeEnt(p);
+  }
+  return good;
 };
 
 Bman.prototype.getKind = function() {
