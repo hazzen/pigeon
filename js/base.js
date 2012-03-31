@@ -154,9 +154,17 @@ geom.AABB.prototype.clone = function() {
                        this.p2.x - this.p1.x, this.p2.y - this.p1.y);
 };
 
-geom.AABB.prototype.contains = function(point) {
-  return (this.p1.x <= point.x && this.p1.y <= point.y &&
-          this.p2.x >= point.x && this.p2.y >= point.y);
+geom.AABB.prototype.contains = function(pointOrX, opt_y) {
+  var x, y;
+  if (opt_y == undefined) {
+    x = pointOrX.x;
+    y = pointOrX.y;
+  } else {
+    x = pointOrX;
+    y = opt_y;
+  }
+  return (this.p1.x <= x && this.p1.y <= y &&
+          this.p2.x >= x && this.p2.y >= y);
 };
 
 geom.AABB.prototype.overlaps = function(aabb) {

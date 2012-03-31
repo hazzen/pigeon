@@ -30,7 +30,8 @@ ImgLoader.prototype.oneLoaded_ = function(img, src) {
 };
 
 IMG = {
-  BUSINESS_MAN: 'res/bman.png'
+  BUSINESS_MAN: 'res/bman.png',
+  BUSINESS_MAN_THUMB: 'res/bman_thumb.png'
 };
 
 IMGS = {};

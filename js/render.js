@@ -14,6 +14,7 @@ function Renderer(attachTo, width, height) {
   this.yt_ = undefined;
   this.xOff_ = 0;
   this.yOff_ = 0;
+  this.aabb_ = new geom.AABB(0, 0, this.w_, this.h_);
 }
 
 Renderer.prototype.focusOn = function(x, y) {
@@ -39,6 +40,38 @@ Renderer.prototype.height = function() {
 
 Renderer.prototype.context = function() {
   return this.context_;
+};
+
+Renderer.prototype.boxOnScreen = function(aabb) {
+  return this.aabb_.overlaps(aabb);
+};
+
+Renderer.prototype.pointOnScreen = function(x, y) {
+  return this.aabb_.contains(x, y);
+};
+
+Renderer.prototype.drawSpriteOrThumb = function(x, y, sprite, thumb) {
+  var cx = x + sprite.width / 2;
+  var cy = y + sprite.height / 2;
+  if (this.pointOnScreen(cx, cy)) {
+    this.context_.drawImage(sprite, x, y);
+  } else {
+    this.drawIndicator(thumb, cx, cy);
+  }
+};
+
+Renderer.prototype.drawIndicator = function(img, tx, ty) {
+  if (tx < this.xOff_) {
+    tx = this.xOff_;
+  } else if (tx + img.width > this.xOff_ + this.w_) {
+    tx = this.xOff_ + this.w_ - img.width;
+  }
+  if (ty < this.yOff_) {
+    ty = this.yOff_;
+  } else if (ty + img.height > this.yOff_ + this.h_) {
+    ty = this.yOff_ + this.h_ - img.height;
+  }
+  this.context_.drawImage(img, tx, ty);
 };
 
 Renderer.prototype.tick = function() {
@@ -74,6 +107,11 @@ Renderer.prototype.tick = function() {
   this.yOff_ += this.yv_;
   this.xv_ -= sgn(this.xv_) * 0.15
   this.yv_ -= sgn(this.yv_) * 0.15
+
+  this.aabb_.p1.x = this.xOff_;
+  this.aabb_.p1.y = this.yOff_;
+  this.aabb_.p2.x = this.xOff_ + this.w_;
+  this.aabb_.p2.y = this.yOff_ + this.h_;
 };
 
 Renderer.prototype.render = function(game) {

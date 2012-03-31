@@ -52,8 +52,9 @@ Game.prototype.tick = function(t) {
 Game.prototype.render = function(renderer) {
   this.level_.render(renderer);
   if (this.bman_) {
-    var ctx = renderer.context();
-    ctx.drawImage(IMGS[IMG.BUSINESS_MAN], this.bman_.x, this.bman_.y);
+    renderer.drawSpriteOrThumb(
+        this.bman_.x, this.bman_.y,
+        IMGS[IMG.BUSINESS_MAN], IMGS[IMG.BUSINESS_MAN_THUMB]);
   }
   for (var i = 0; i < this.ents_.length; ++i) {
     this.ents_[i].render(renderer);
