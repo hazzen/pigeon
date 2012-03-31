@@ -31,7 +31,8 @@ ImgLoader.prototype.oneLoaded_ = function(img, src) {
 
 IMG = {
   BUSINESS_MAN: 'res/bman.png',
-  BUSINESS_MAN_THUMB: 'res/bman_thumb.png'
+  BUSINESS_MAN_THUMB: 'res/bman_thumb.png',
+  HEART_THUMB: 'res/possession_thumb.png'
 };
 
 IMGS = {};
@@ -65,14 +66,14 @@ $(document).ready(function() {
   level.addBlock(new geom.AABB(0, 0, 10, 1000), Rgb.fromCss('#abc'));
   level.addBlock(new geom.AABB(1630, 0, 10, 1000), Rgb.fromCss('#abc'));
 
-  var game = new Game(level);
-
-  $(gameElem).keydown(bind(game, game.onKeyDown));
-  $(gameElem).keyup(bind(game, game.onKeyUp));
-
-  var lastFrame = new Date().getTime();
   loader.whenDone(function(loaded) {
     IMGS = loaded;
+
+    var game = new Game(level);
+    $(gameElem).keydown(bind(game, game.onKeyDown));
+    $(gameElem).keyup(bind(game, game.onKeyUp));
+
+    var lastFrame = new Date().getTime();
     (function renderLoop() {
 
       var now = new Date().getTime();

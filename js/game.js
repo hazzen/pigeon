@@ -7,7 +7,7 @@ function Game(level) {
   this.player_ = new Player(this);
   this.possession_ = new Possession(this, new geom.AABB(300, 150, 10, 15), 10);
   this.ents_ = [this.possession_, this.player_];
-  this.bman_ = new geom.Point(145, 22);
+  this.bman_ = new Bman(this, 145, 22);
 };
 
 Game.prototype.width = function() { return this.level_.width(); };
@@ -47,14 +47,15 @@ Game.prototype.tick = function(t) {
   for (var i = 0; i < this.ents_.length; ++i) {
     this.ents_[i].tick(t);
   }
+  if (this.bman_) {
+    this.bman_.tick(t);
+  }
 };
 
 Game.prototype.render = function(renderer) {
   this.level_.render(renderer);
   if (this.bman_) {
-    renderer.drawSpriteOrThumb(
-        this.bman_.x, this.bman_.y,
-        IMGS[IMG.BUSINESS_MAN], IMGS[IMG.BUSINESS_MAN_THUMB]);
+    this.bman_.render(renderer);
   }
   for (var i = 0; i < this.ents_.length; ++i) {
     this.ents_[i].render(renderer);
@@ -379,11 +380,66 @@ Possession.prototype.nabbed = function() {
 };
 
 Possession.prototype.render = function(renderer) {
-  var ctx = renderer.context();
-  ctx.fillStyle = 'rgb(34, 154, 28)';
-  var x = this.collider_.aabb.p1.x;
-  var y = this.collider_.aabb.p1.y;
-  var w = this.collider_.aabb.p2.x - x;
-  var h = this.collider_.aabb.p2.y - y;
-  ctx.fillRect(x, y, w, h);
+  if (!renderer.boxOnScreen(this.collider_.aabb)) {
+    renderer.drawIndicator(IMGS[IMG.HEART_THUMB],
+        this.collider_.x(), this.collider_.y());
+  } else {
+    var ctx = renderer.context();
+    ctx.fillStyle = 'rgb(34, 154, 28)';
+    var x = this.collider_.aabb.p1.x;
+    var y = this.collider_.aabb.p1.y;
+    var w = this.collider_.aabb.p2.x - x;
+    var h = this.collider_.aabb.p2.y - y;
+    ctx.fillRect(x, y, w, h);
+  }
+};
+
+// +----------------------------------------------------------------------------
+// | Bman
+Bman = function(game, x, y, opt_facing, opt_strength) {
+  this.game_ = game;
+  this.x_ = x;
+  this.y_ = y;
+  this.facing_ = opt_facing || Bman.Facing.RIGHT;
+  this.strength_ = opt_strength || 10;
+
+  this.sprite_ = IMGS[IMG.BUSINESS_MAN];
+};
+
+Bman.Facing = {
+  RIGHT: 1,
+  LEFT: -1
+};
+
+Bman.prototype.render = function(renderer) {
+  if (this.falling_) {
+    renderer.drawSpriteOrThumb(
+        this.falling_.aabb.p1.x, this.falling_.aabb.p1.y,
+        this.sprite_, IMGS[IMG.BUSINESS_MAN_THUMB]);
+  } else {
+    renderer.drawSpriteOrThumb(
+        this.x_, this.y_,
+        this.sprite_, IMGS[IMG.BUSINESS_MAN_THUMB]);
+  }
+};
+
+Bman.prototype.tick = function(t) {
+  this.strength_ -= t;
+  if (this.falling_) {
+    this.falling_.gravityAccel(t);
+    var collisions = this.falling_.tick(t);
+  } else if (this.jumpFrame_) {
+    if (this.jumpFrame_ > 30) {
+      this.x_ += this.facing_ * this.sprite_.width;
+      this.falling_ = new Collider(
+          this.game_,
+          new geom.AABB(this.x_, this.y_,
+                        this.sprite_.width, this.sprite_.height),
+          0, 0, 100);
+    } else {
+      this.jumpFrame_ += t * FRAME_RATE;
+    }
+  } else if (this.strength_ < 0) {
+    this.jumpFrame_ = 1;
+  }
 };
