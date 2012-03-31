@@ -5,8 +5,8 @@ function Game(level) {
   this.keyDown_ = {};
   this.keyDownCounts_ = {};
   this.player_ = new Player(this);
-  this.possession_ = new Possession(this, new geom.AABB(300, 400, 50, 15), 10);
-  this.ents_ = [this.player_, this.possession_];
+  this.possession_ = new Possession(this, new geom.AABB(300, 150, 10, 15), 10);
+  this.ents_ = [this.possession_, this.player_];
 };
 
 Game.prototype.width = function() { return this.level_.width(); };
@@ -222,7 +222,7 @@ Player = function(game) {
 };
 
 Player.MAX_V_X = 100;
-Player.MAX_V_Y = 100;
+Player.MAX_V_Y = 300;
 Player.LENGTH = 20;
 Player.STROKE = 5;
 
