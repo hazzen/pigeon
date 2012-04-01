@@ -50,17 +50,17 @@ Renderer.prototype.pointOnScreen = function(x, y) {
   return this.aabb_.contains(x, y);
 };
 
-Renderer.prototype.drawSpriteOrThumb = function(x, y, sprite, thumb) {
+Renderer.prototype.drawSpriteOrThumb = function(x, y, sprite, thumb, hl) {
   var cx = x + sprite.width / 2;
   var cy = y + sprite.height / 2;
   if (this.pointOnScreen(cx, cy)) {
     this.context_.drawImage(sprite, x, y);
   } else {
-    this.drawIndicator(thumb, cx, cy);
+    this.drawIndicator(thumb, cx, cy, hl);
   }
 };
 
-Renderer.prototype.drawIndicator = function(img, tx, ty) {
+Renderer.prototype.drawIndicator = function(img, tx, ty, hl) {
   if (tx < this.xOff_) {
     tx = this.xOff_;
   } else if (tx + img.width > this.xOff_ + this.w_) {
@@ -71,6 +71,9 @@ Renderer.prototype.drawIndicator = function(img, tx, ty) {
   } else if (ty + img.height > this.yOff_ + this.h_) {
     ty = this.yOff_ + this.h_ - img.height;
   }
+  this.context_.lineWidth = 6;
+  this.context_.strokeStyle = hl ? 'rgb(197, 153, 64)' : 'rgb(0, 0, 0)';
+  this.context_.strokeRect(tx, ty, img.width, img.height);
   this.context_.drawImage(img, tx, ty);
 };
 

@@ -13,22 +13,9 @@ function Game(level) {
   this.keyDown_ = {};
   this.keyDownCounts_ = {};
   this.player = new Player(this);
+  this.elapsedTime_ = 0;
 
   this.ents_ = [this.player];
-
-  var ps = [
-    new Possession(this, new geom.AABB(100, 100, 10, 15), 10)
-  ];
-  for (var i = 0; i < ps.length; ++i) {
-    this.addEnt(ps[i]);
-  }
-  var bm =[
-    new Bman(this, 145, 22, undefined, 3)
-  ];
-  bm[0].setPossession(ps[0]);
-  for (var i = 0; i < bm.length; ++i) {
-    this.addEnt(bm[i]);
-  }
 };
 
 Game.prototype.width = function() { return this.level_.width(); };
@@ -87,13 +74,18 @@ Game.prototype.tick = function(t) {
   this.tickHandleInput_(t);
   if (this.paused) return;
 
+  this.elapsedTime_ += t;
   for (var i = this.ents_.length - 1; i >= 0; --i) {
     if (this.ents_[i]) {
       this.ents_[i].tick(t);
     }
   }
 
-  if (this.keyPressed('p')) {
+  var et = this.elapsedTime_;
+  var d = Math.floor(Math.max(1, 10 - et / 60));
+  if (this.keyPressed('p') ||
+      (Math.floor(this.elapsedTime_) % d == 1 &&
+       Math.floor(this.elapsedTime_ - t) % d == 0)) {
     var ss = this.level_.randomOfKind(BlockKind.SKYSCRAPER);
     var home = this.level_.randomOfKind(BlockKind.HOME);
 
@@ -108,7 +100,7 @@ Game.prototype.tick = function(t) {
 
     var p = new Possession(
         this,
-        new geom.AABB(home.p1.x, home.p1.y - 50, 10, 15),
+        new geom.AABB(randInt(home.p1.x, home.p2.x), home.p1.y - 50, 10, 15),
         10);
 
     bman.setPossession(p);
@@ -327,8 +319,8 @@ Player = function(game) {
   this.possession_ = null;
 };
 
-Player.MAX_V_X = 100;
-Player.MAX_V_Y = 300;
+Player.MAX_V_X = 900;
+Player.MAX_V_Y = 4800;
 Player.LENGTH = 20;
 Player.STROKE = 5;
 
@@ -529,10 +521,12 @@ Possession.prototype.setOwner = function(bman) {
 Possession.prototype.nabbed = function() {
   this.glowing_ = 0;
   this.falling_ = false;
+  this.nabbed_ = true;
 };
 
 Possession.prototype.dropped = function() {
   this.falling_ = true;
+  this.nabbed_ = false;
 };
 
 Possession.prototype.getKind = function() {
@@ -643,14 +637,17 @@ Bman.prototype.getKind = function() {
 };
 
 Bman.prototype.render = function(renderer) {
+  var nabbed = this.possession_.nabbed_;
   if (this.falling_) {
     renderer.drawSpriteOrThumb(
         this.falling_.aabb.p1.x, this.falling_.aabb.p1.y,
-        this.sprite_, IMGS[IMG.BMAN_THUMB]);
+        this.sprite_, IMGS[IMG.BMAN_THUMB],
+        nabbed);
   } else {
     renderer.drawSpriteOrThumb(
         this.x_, this.y_,
-        this.sprite_, IMGS[IMG.BMAN_THUMB]);
+        this.sprite_, IMGS[IMG.BMAN_THUMB],
+        nabbed);
   }
 };
 
