@@ -1,5 +1,13 @@
 // +----------------------------------------------------------------------------
 // | Level
+
+BlockKind = {
+  BASIC: 1,
+  SKYSCRAPER: 2,
+  HOME: 3,
+  BACKGROUND: 4
+};
+
 function Level(width, height) {
   this.width_ = width;
   this.height_ = height;
@@ -9,9 +17,15 @@ function Level(width, height) {
 Level.prototype.width = function() { return this.width_; };
 Level.prototype.height = function() { return this.height_; };
 
-Level.prototype.addBlock = function(aabb, color) {
-  this.blocks_.push({bounds: aabb, color: color});
+Level.prototype.addBlock = function(aabb, color, opt_kind) {
+  this.blocks_.push({
+    bounds: aabb,
+    color: color,
+    kind: opt_kind || BlockKind.BASIC
+  });
 };
+
+Level.prototype.addBackground
 
 Level.prototype.render = function(renderer) {
   var ctx = renderer.context();
@@ -38,6 +52,7 @@ Level.prototype.collides = function(aabb, dx, dy) {
     }
     for (var i = this.blocks_.length - 1; i >= 0; --i) {
       var block = this.blocks_[i].bounds;
+      if (block.kind == BlockKind.BACKGROUND) continue;
       if (block.overlaps(aabb)) {
         var tx;
         if (dx > 0) {
@@ -80,4 +95,23 @@ Level.prototype.collides = function(aabb, dx, dy) {
   collisions.dtx = ntx;
   collisions.dty = nty;
   return collisions;
+};
+
+Level.prototype.indicesOfKinds = function(kinds) {
+  var indices = [];
+  for (var i = this.blocks_.length - 1; i >= 1; --i) {
+    if (this.blocks_[i].kind in kinds) {
+      indices.push(i);
+    }
+  }
+  return indices;
+};
+
+Level.prototype.randomOfKind = function(kind) {
+  var found = this.indicesOfKinds(makeSet(kind));
+  if (found.length) {
+    var randomIndex = randInt(found.length);
+    return this.blocks_[found[randomIndex]].bounds.clone();
+  }
+  return null;
 };

@@ -91,6 +91,30 @@ Game.prototype.tick = function(t) {
       this.ents_[i].tick(t);
     }
   }
+
+  if (this.keyPressed('p')) {
+    var ss = this.level_.randomOfKind(BlockKind.SKYSCRAPER);
+    var home = this.level_.randomOfKind(BlockKind.HOME);
+
+    var facing = Math.random() < 0.5 ? Bman.Facing.LEFT : Bman.Facing.RIGHT;
+    var x = ss.p1.x - 3;
+    if (facing == Bman.Facing.RIGHT) {
+      x = ss.p2.x - IMGS[IMG.BMAN].width + 3;
+    }
+    var y = ss.p1.y;
+    y -= IMGS[IMG.BMAN].height;
+    var bman = new Bman(this, x, y, facing, 10);
+
+    var p = new Possession(
+        this,
+        new geom.AABB(home.p1.x, home.p1.y - 50, 10, 15),
+        10);
+
+    bman.setPossession(p);
+
+    this.addEnt(p);
+    this.addEnt(bman);
+  }
 };
 
 Game.prototype.render = function(renderer) {
@@ -530,13 +554,33 @@ Bman = function(game, x, y, opt_facing, opt_strength) {
   this.facing_ = opt_facing || Bman.Facing.RIGHT;
   this.initStrength_ = this.strength_ = opt_strength || 10;
 
-  this.sprite_ = IMGS[IMG.BUSINESS_MAN];
+  this.sprite_ = this.getSprite_();
   this.aabb_ = new geom.AABB(x, y, this.sprite_.width, this.sprite_.height);
 };
+
+Bman.FLIPPED_ = null;
 
 Bman.Facing = {
   RIGHT: 1,
   LEFT: -1
+};
+
+Bman.prototype.getSprite_ = function() {
+  if (this.facing_ == Bman.Facing.RIGHT) {
+    return IMGS[IMG.BMAN];
+  } else if (Bman.FLIPPED_) {
+    return Bman.FLIPPED_;
+  } else {
+    var spr = IMGS[IMG.BMAN];
+    var offscreen = document.createElement('canvas');
+    offscreen.width = spr.width;
+    offscreen.height = spr.height;
+    var ctx = offscreen.getContext('2d');
+    ctx.scale(-1, 1);
+    ctx.drawImage(spr, -spr.width, 0);
+    Bman.FLIPPED_ = offscreen;
+    return offscreen;
+  }
 };
 
 Bman.prototype.strengthLeft = function() {
@@ -582,11 +626,11 @@ Bman.prototype.render = function(renderer) {
   if (this.falling_) {
     renderer.drawSpriteOrThumb(
         this.falling_.aabb.p1.x, this.falling_.aabb.p1.y,
-        this.sprite_, IMGS[IMG.BUSINESS_MAN_THUMB]);
+        this.sprite_, IMGS[IMG.BMAN_THUMB]);
   } else {
     renderer.drawSpriteOrThumb(
         this.x_, this.y_,
-        this.sprite_, IMGS[IMG.BUSINESS_MAN_THUMB]);
+        this.sprite_, IMGS[IMG.BMAN_THUMB]);
   }
 };
 

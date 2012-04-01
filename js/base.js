@@ -7,6 +7,24 @@ function getUid(obj) {
   return obj[UID_PROP_NAME] || (obj[UID_PROP_NAME] = ++UID);
 };
 
+function makeSet() {
+  var set = {};
+  for (var i = 0; i < arguments.length; ++i) {
+    set[arguments[i]] = true;
+  }
+  return set;
+};
+
+function randInt(a, opt_b) {
+  var low = 0;
+  var high = a;
+  if (opt_b != undefined) {
+    low = a;
+    high = opt_b;
+  }
+  return low + Math.floor(Math.random() * (high - low));
+};
+
 function sgn(n) {
   return n < 0 ? -1 : (n > 0 ? 1 : 0);
 };

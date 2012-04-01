@@ -30,8 +30,8 @@ ImgLoader.prototype.oneLoaded_ = function(img, src) {
 };
 
 IMG = {
-  BUSINESS_MAN: 'res/bman.png',
-  BUSINESS_MAN_THUMB: 'res/bman_thumb.png',
+  BMAN: 'res/bman.png',
+  BMAN_THUMB: 'res/bman_thumb.png',
   HEART_THUMB: 'res/possession_thumb.png'
 };
 
@@ -51,13 +51,17 @@ $(document).ready(function() {
   // +--------------------------------------------------------------------------
   // | House
   level.addBlock(new geom.AABB(740, 956, 84, 8),
-                 Rgb.fromCss('#b22'));
+                 Rgb.fromCss('#b22'),
+                 BlockKind.HOME);
   level.addBlock(new geom.AABB(742, 960, 80, 40),
-                 Rgb.fromCss('#d2b48c'));
+                 Rgb.fromCss('#d2b48c'),
+                 BlockKind.HOME);
 
   // +--------------------------------------------------------------------------
   // | Skyscraper
-  level.addBlock(new geom.AABB(100, 150, 100, 850), Rgb.fromCss('#abc'));
+  level.addBlock(new geom.AABB(100, 150, 100, 850),
+                 Rgb.fromCss('#abc'),
+                 BlockKind.SKYSCRAPER);
 
   // +--------------------------------------------------------------------------
   // | Border
@@ -102,8 +106,8 @@ $(document).ready(function() {
         ctx.fillRect(0, 0, renderer.width(), renderer.height());
         ctx.font = 'bold 12px sans-serif';
         ctx.fillStyle = '#ccc';
-        ctx.fillText('P A U S E D', 50, 30);
-        ctx.fillText('press z to continue', 50, 45);
+        ctx.fillText('P A U S E D', 50, 80);
+        ctx.fillText('press z to continue', 50, 95);
         if (game.keyDown('z')) {
           game.paused = false;
         }
