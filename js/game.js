@@ -149,6 +149,7 @@ Collider = function(game, aabb, vx, vy, mass) {
   this.vy = vy;
   this.mass = mass;
   this.ignores = {};
+  this.ignoreBlocks = {};
 };
 
 Collider.fromCenter = function(game, x, y, w, h, vx, vy, mass) {
@@ -254,7 +255,7 @@ Collider.prototype.collideOthers = function(others, t) {
 
 Collider.prototype.tick = function(t) {
   var levelCollisions = this.game.level().collides(
-      this.aabb.clone(), this.vx * t, this.vy * t);
+      this.aabb.clone(), this.vx * t, this.vy * t, this.ignoreBlocks);
   var gameCollisions = this.collideOthers(this.game.ents(), t);
   var dtx = Math.max(0, Math.min(levelCollisions.dtx, gameCollisions.dtx));
   var dty = Math.max(0, Math.min(levelCollisions.dty, gameCollisions.dty));
@@ -647,6 +648,7 @@ Bman.prototype.tick = function(t) {
           new geom.AABB(this.x_, this.y_,
                         this.sprite_.width, this.sprite_.height),
           0, 0, 100);
+      this.falling_.ignoreBlocks = makeSet(BlockKind.SKYSCRAPER);
     } else {
       this.jumpFrame_ += t * FRAME_RATE;
     }

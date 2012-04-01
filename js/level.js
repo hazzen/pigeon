@@ -38,7 +38,7 @@ Level.prototype.render = function(renderer) {
   }
 };
 
-Level.prototype.collides = function(aabb, dx, dy) {
+Level.prototype.collides = function(aabb, dx, dy, ignoreBlocks) {
   var collisions = {};
   var xBlocks = [];
   var yBlocks = [];
@@ -51,14 +51,16 @@ Level.prototype.collides = function(aabb, dx, dy) {
       aabb.p2.x += dx;
     }
     for (var i = this.blocks_.length - 1; i >= 0; --i) {
-      var block = this.blocks_[i].bounds;
+      var block = this.blocks_[i];
+      var bound = block.bounds;
       if (block.kind == BlockKind.BACKGROUND) continue;
-      if (block.overlaps(aabb)) {
+      if (ignoreBlocks && block.kind in ignoreBlocks) continue;
+      if (bound.overlaps(aabb)) {
         var tx;
         if (dx > 0) {
-          tx = (block.p1.x - aabb.p2.x - EPSILON) / dx;
+          tx = (bound.p1.x - aabb.p2.x - EPSILON) / dx;
         } else {
-          tx = (block.p2.x - aabb.p1.x + EPSILON) / dx;
+          tx = (bound.p2.x - aabb.p1.x + EPSILON) / dx;
         }
         xBlocks.push(block);
         ntx = Math.min(tx, ntx);
@@ -76,13 +78,16 @@ Level.prototype.collides = function(aabb, dx, dy) {
       aabb.p2.y += dy;
     }
     for (var i = this.blocks_.length - 1; i >= 0; --i) {
-      var block = this.blocks_[i].bounds;
-      if (block.overlaps(aabb)) {
+      var block = this.blocks_[i];
+      var bound = block.bounds;
+      if (block.kind == BlockKind.BACKGROUND) continue;
+      if (ignoreBlocks && block.kind in ignoreBlocks) continue;
+      if (bound.overlaps(aabb)) {
         var ty;
         if (dy > 0) {
-          ty = (block.p1.y - aabb.p2.y - EPSILON) / dy;
+          ty = (bound.p1.y - aabb.p2.y - EPSILON) / dy;
         } else {
-          ty = (block.p2.y - aabb.p1.y + EPSILON) / dy;
+          ty = (bound.p2.y - aabb.p1.y + EPSILON) / dy;
         }
         yBlocks.push(block);
         nty = Math.min(ty, nty);

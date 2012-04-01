@@ -62,6 +62,9 @@ $(document).ready(function() {
   level.addBlock(new geom.AABB(100, 150, 100, 850),
                  Rgb.fromCss('#abc'),
                  BlockKind.SKYSCRAPER);
+  level.addBlock(new geom.AABB(250, 250, 100, 750),
+                 Rgb.fromCss('#cbc'),
+                 BlockKind.SKYSCRAPER);
 
   // +--------------------------------------------------------------------------
   // | Border
