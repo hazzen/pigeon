@@ -14,6 +14,7 @@ function Game(level) {
   this.keyDownCounts_ = {};
   this.player = new Player(this);
   this.elapsedTime_ = 0;
+  this.nextSpawn_ = 5;
   this.globalSadness_ = 10;
 
   this.ents_ = [this.player];
@@ -101,11 +102,12 @@ Game.prototype.tick = function(t) {
     }
   }
 
-  var et = this.elapsedTime_;
-  var d = Math.floor(Math.max(1, 30 - et / 60));
+  var INC_RATE_SEC = 5;
+  var START_D = 30;
   if (this.keyPressed('p') ||
-      (Math.floor(this.elapsedTime_) % d == 1 &&
-       Math.floor(this.elapsedTime_ - t) % d == 0)) {
+      this.nextSpawn_ < this.elapsedTime_) {
+    var d = Math.floor(Math.max(5, START_D - this.elapsedTime_ / INC_RATE_SEC));
+    this.nextSpawn_ = this.elapsedTime_ + randFlt(1 + d / 2, 1 + d);
     var ss = this.level_.randomOfKind(BlockKind.SKYSCRAPER);
     var home = this.level_.randomOfKind(BlockKind.HOME);
 
@@ -119,7 +121,8 @@ Game.prototype.tick = function(t) {
     var bman = new Bman(this, x, y, facing, 30);
 
     var p = Possession.randomPossession(
-        this, randInt(home.p1.x, home.p2.x), home.p1.y - 2, randFlt(2, 10));
+        this, randInt(home.p1.x, home.p2.x), home.p1.y - 2,
+        randFlt(2, 10 + START_D - d));
 
     bman.setPossession(p);
 
@@ -642,12 +645,16 @@ Possession.ImgHelper.make = function(spriteKey) {
 
 Possession.CAT = Possession.ImgHelper.make(IMG.CAT);
 Possession.DOG_SMALL = Possession.ImgHelper.make(IMG.DOG_SMALL);
+Possession.DOG_LARGE = Possession.ImgHelper.make(IMG.DOG_LARGE);
+Possession.ELEPHANT = Possession.ImgHelper.make(IMG.ELEPHANT);
 
 Possession.WEIGHTS = [
   {minMass:  0, maxMass:  5, obj: Possession.PICTURE_FRAME},
   {minMass:  0, maxMass:  5, obj: Possession.FLOWERS},
   {minMass:  5, maxMass: 10, obj: Possession.CAT},
-  {minMass:  5, maxMass: 10, obj: Possession.DOG_SMALL}
+  {minMass:  5, maxMass: 10, obj: Possession.DOG_SMALL},
+  {minMass: 10, maxMass: 15, obj: Possession.DOG_LARGE},
+  {minMass: 15, maxMass: 50, obj: Possession.ELEPHANT}
 ];
 
 Possession.randomPossession = function(game, x, y, maxMass) {
