@@ -429,7 +429,7 @@ Player.prototype.tick = function(t) {
     vdx += 290;
   }
   if (this.game_.keyPressed(Keys.UP)) {
-    vdy -= 2800;
+    vdy -= Player.MAX_V_Y / 2;
     this.flapAnim_ = 1;
   } else if (this.game_.keyDown(Keys.DOWN)) {
     if (this.collider_.vy < -5) {
@@ -492,11 +492,6 @@ Player.prototype.tick = function(t) {
 
 Player.prototype.possessionHit = function(possession) {
   var pickupZone = possession.asCollider().aabb.clone();
-  var w = pickupZone.p2.x - pickupZone.p1.x;
-  if (w > 10) {
-    pickupZone.p1.x += (w - 10) / 2;
-    pickupZone.p2.x -= (w - 10) / 2;
-  }
   pickupZone.p1.y -= 5;
   pickupZone.p2.y = pickupZone.p1.y + 10;
 
@@ -629,7 +624,7 @@ Possession.ImgHelper.ctor = function(spriteKey) {
     var sprite = IMGS[spriteKey];
     var w = sprite.width;
     var h = sprite.height;
-    var pos = new Possession(game, new geom.AABB(x - w, y - h, w, h), mass);
+    var pos = new Possession(game, new geom.AABB(x - w / 2, y - h, w, h), mass);
     pos.renderImpl_ = Possession.CAT.rndr;
     pos.sprite_ = sprite;
     return pos;
@@ -654,7 +649,7 @@ Possession.WEIGHTS = [
   {minMass:  5, maxMass: 10, obj: Possession.CAT},
   {minMass:  5, maxMass: 10, obj: Possession.DOG_SMALL},
   {minMass: 10, maxMass: 15, obj: Possession.DOG_LARGE},
-  {minMass: 15, maxMass: 50, obj: Possession.ELEPHANT}
+  {minMass: 15, maxMass: 35, obj: Possession.ELEPHANT}
 ];
 
 Possession.randomPossession = function(game, x, y, maxMass) {

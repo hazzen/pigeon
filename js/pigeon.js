@@ -36,6 +36,7 @@ var genLevel = function(levelWidth, levelHeight) {
   var SS_WIDTH_MAX = 150;
   var HOME_WIDTH_MIN = 50;
   var HOME_WIDTH_MAX = 150;
+  var HOME_SPACE_WIDTH = 256;
   var SS_COLORS = [
     Rgb.fromCss('#abc'),
     Rgb.fromCss('#cbc'),
@@ -86,18 +87,20 @@ var genLevel = function(levelWidth, levelHeight) {
   }
   for (var i = 0; i < numHomes; ++i) {
     var w = randInt(HOME_WIDTH_MIN, HOME_WIDTH_MAX);
-    var x = place(w);
+    var x = place(w + HOME_SPACE_WIDTH);
     if (x == -1) {
       window.console.log('Whoops, couldnt place ith home: ' + i);
     } else {
-      taken.push([x, x + w]);
+      taken.push([x, x + w + HOME_SPACE_WIDTH]);
       var h = randInt(levelHeight * 0.1, levelHeight * 0.2);
-      level.addBlock(new geom.AABB(x, levelHeight - h, w, h),
-                     pick(HOME_COLORS),
-                     BlockKind.BASIC);
-      level.addBlock(new geom.AABB(x, levelHeight - h - 8, w, 8),
-                     pick(HOME_ROOF_COLORS),
-                     BlockKind.HOME);
+      level.addBlock(
+          new geom.AABB(x + HOME_SPACE_WIDTH / 2, levelHeight - h, w, h),
+          pick(HOME_COLORS),
+          BlockKind.BASIC);
+      level.addBlock(
+          new geom.AABB(x + HOME_SPACE_WIDTH / 2, levelHeight - h - 8, w, 8),
+          pick(HOME_ROOF_COLORS),
+          BlockKind.HOME);
     }
   }
 
