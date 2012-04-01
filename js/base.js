@@ -210,3 +210,15 @@ geom.AABB.prototype.toString = function() {
   return '[(' + this.p1.x + ', ' + this.p1.y + ') --> (' +
                 this.p2.x + ', ' + this.p2.y + ')]';
 }
+
+// +----------------------------------------------------------------------------
+// | Images
+IMG = {
+  BMAN: 'res/bman.png',
+  CAT: 'res/cat.png',
+  DOG_SMALL: 'res/dog_small.png',
+  BMAN_THUMB: 'res/bman_thumb.png',
+  HEART_THUMB: 'res/possession_thumb.png'
+};
+
+IMGS = {};

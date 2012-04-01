@@ -29,14 +29,6 @@ ImgLoader.prototype.oneLoaded_ = function(img, src) {
   }
 };
 
-IMG = {
-  BMAN: 'res/bman.png',
-  BMAN_THUMB: 'res/bman_thumb.png',
-  HEART_THUMB: 'res/possession_thumb.png'
-};
-
-IMGS = {};
-
 var genLevel = function(levelWidth, levelHeight) {
   var level = new Level();
 

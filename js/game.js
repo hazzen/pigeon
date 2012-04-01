@@ -103,7 +103,7 @@ Game.prototype.tick = function(t) {
     var bman = new Bman(this, x, y, facing, 30);
 
     var p = Possession.randomPossession(
-        this, randInt(home.p1.x, home.p2.x), home.p1.y - 2, randFlt(5, 10));
+        this, randInt(home.p1.x, home.p2.x), home.p1.y - 2, randFlt(2, 10));
 
     bman.setPossession(p);
 
@@ -578,9 +578,44 @@ Possession.FLOWERS.ctor = function(game, x, y, mass) {
   return pos;
 };
 
+Possession.ImgHelper = {};
+Possession.ImgHelper.rndr = function(renderer) {
+  var ctx = renderer.context();
+  var c = this.collider_;
+  ctx.drawImage(this.sprite_, c.x(), c.y());
+
+  if (this.glowing_ > 0) {
+    this.renderBoxGlow_(renderer);
+  }
+};
+
+Possession.ImgHelper.ctor = function(spriteKey) {
+  return function(game, x, y, mass) {
+    var sprite = IMGS[spriteKey];
+    var w = sprite.width;
+    var h = sprite.height;
+    var pos = new Possession(game, new geom.AABB(x - w, y - h, w, h), mass);
+    pos.renderImpl_ = Possession.CAT.rndr;
+    pos.sprite_ = sprite;
+    return pos;
+  };
+};
+
+Possession.ImgHelper.make = function(spriteKey) {
+  var struct = {};
+  struct.rndr = Possession.ImgHelper.rndr;
+  struct.ctor = Possession.ImgHelper.ctor(spriteKey);
+  return struct;
+};
+
+Possession.CAT = Possession.ImgHelper.make(IMG.CAT);
+Possession.DOG_SMALL = Possession.ImgHelper.make(IMG.DOG_SMALL);
+
 Possession.WEIGHTS = [
-  {maxMass: 10, obj: Possession.PICTURE_FRAME},
-  {maxMass: 10, obj: Possession.FLOWERS}
+  {minMass:  0, maxMass:  5, obj: Possession.PICTURE_FRAME},
+  {minMass:  0, maxMass:  5, obj: Possession.FLOWERS},
+  {minMass:  5, maxMass: 10, obj: Possession.CAT},
+  {minMass:  5, maxMass: 10, obj: Possession.DOG_SMALL}
 ];
 
 Possession.randomPossession = function(game, x, y, maxMass) {
