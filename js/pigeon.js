@@ -113,7 +113,7 @@ var genLevel = function(levelWidth, levelHeight) {
 $(document).ready(function() {
   var gameElem = document.getElementById('game');
   var renderer = new Renderer(gameElem, 640, 480);
-  var level = genLevel(3000, 1000);
+  var level = genLevel(5000, 1000);
 
   var loader = new ImgLoader();
   for (var img in IMG) {

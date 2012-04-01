@@ -14,6 +14,7 @@ function Game(level) {
   this.keyDownCounts_ = {};
   this.player = new Player(this);
   this.elapsedTime_ = 0;
+  this.globalSadness_ = 10;
 
   this.ents_ = [this.player];
 };
@@ -22,6 +23,21 @@ Game.prototype.width = function() { return this.level_.width(); };
 Game.prototype.height = function() { return this.level_.height(); };
 Game.prototype.level = function() { return this.level_; };
 Game.prototype.ents = function() { return this.ents_; };
+Game.prototype.sadness = function() { return this.globalSadness_; };
+
+Game.prototype.addSadness = function(diff) {
+  this.globalSadness_ += diff;
+  this.globalSadness_ = Math.max(0, this.globalSadness_);
+  return this.globalSadness_;
+};
+
+Game.prototype.setSadness = function(sad) {
+  return (this.globalSadness_ = sad);
+};
+
+Game.prototype.sadnessToGo = function() {
+  return this.globalSadness_ / 100;
+};
 
 Game.prototype.addEnt = function(ent) {
   for (var i = 0; i < this.ents_.length; ++i) {
@@ -142,6 +158,8 @@ Collider = function(game, aabb, vx, vy, mass) {
   this.h_ = aabb.p2.y - aabb.p1.y;
   this.vx = vx;
   this.vy = vy;
+  this.ovx = vx;
+  this.ovy = vy;
   this.mass = mass;
   this.ignores = {};
   this.ignoreBlocks = {};
@@ -266,6 +284,8 @@ Collider.prototype.collideOthers = function(others, t) {
 };
 
 Collider.prototype.tick = function(t) {
+  this.ovx = this.vx;
+  this.ovy = this.vy;
   var levelCollisions = this.game.level().collides(
       this.aabb.clone(), this.vx * t, this.vy * t, this.ignoreBlocks);
   var gameCollisions = this.collideOthers(this.game.ents(), t);
@@ -301,6 +321,18 @@ Collider.prototype.tick = function(t) {
     this.vx *= 0.9;
   }
 
+  var maxHitXv = levelCollisions.xBlocks.length ? Math.abs(this.ovx) : 0;
+  for (var i = 0; i < gameCollisions.xOthers.length; ++i) {
+    var other = gameCollisions.xOthers[i];
+    maxHitXv = Math.max(maxHitXv, Math.abs(this.ovx - other.ovx));
+  }
+
+  var maxHitYv = levelCollisions.yBlocks.length ? Math.abs(this.ovy) : 0;
+  for (var i = 0; i < gameCollisions.yOthers.length; ++i) {
+    var other = gameCollisions.yOthers[i];
+    maxHitYv = Math.max(maxHitYv, Math.abs(this.ovy - other.ovy));
+  }
+
   return {
     level: levelCollisions,
     game: gameCollisions,
@@ -308,6 +340,8 @@ Collider.prototype.tick = function(t) {
     hitGame: gameCollisions.yOthers.length || gameCollisions.xOthers.length,
     hitX: levelCollisions.xBlocks.length || gameCollisions.xOthers.length,
     hitY: levelCollisions.yBlocks.length || gameCollisions.yOthers.length,
+    hitXv: maxHitXv,
+    hitYv: maxHitYv,
     dtx: dtx,
     dty: dty,
     dx: dx,
@@ -408,8 +442,6 @@ Player.prototype.tick = function(t) {
   this.collider_.gravityAccel(t);
   this.collider_.vx += t * vdx;
   this.collider_.vy += t * vdy;
-  var ovx = this.collider_.vx;
-  var ovy = this.collider_.vy;
   var cs = this.collider_.tick(t);
 
   if (this.possession_ && !this.possession_.dead) {
@@ -431,11 +463,11 @@ Player.prototype.tick = function(t) {
     }
 
     var owner = this.possession_.owner();
+    var collideXv = Math.max(pcs.hitXv, cs.hitXv);
+    var collideYv = Math.max(pcs.hitYv, cs.hitYv);
     var magPlayer = this.collider_.mass * t * Math.sqrt(
-        (pcs.hitX || cs.hitX ? 1 : 0) * ovx * ovx +
-        (pcs.hitY || cs.hitY ? 1 : 0) * ovy * ovy);
-    if (magPlayer > 40 && (cs.hitLevel || cs.hitGame ||
-                           pcs.hitLevel || pcs.hitGame)) {
+        collideXv * collideXv + collideYv * collideYv);
+    if (magPlayer > 40) {
       this.possessionDrop();
     } else if (owner && owner.acceptDelivery(this.possession_)) {
       this.possession_ = null;
@@ -761,6 +793,7 @@ Bman.prototype.acceptDelivery = function(p) {
   }
   var good = this.aabb_.overlaps(p.asCollider().aabb);
   if (good) {
+    this.game_.addSadness(-1);
     this.game_.removeEnt(this, new geom.AABB(
           this.x_, this.y_, this.sprite_.width, this.sprite_.height));
     this.game_.removeEnt(p, p.asCollider().aabb);
@@ -790,7 +823,8 @@ Bman.prototype.tick = function(t) {
   if (this.falling_) {
     this.falling_.gravityAccel(t);
     var collisions = this.falling_.tick(t);
-    if (collisions.level.yBlocks.length) {
+    if (collisions.hitY) {
+      this.game_.addSadness(5);
       this.game_.removeEnt(this, this.falling_.aabb);
       this.game_.removeEnt(
           this.possession_, this.possession_.asCollider().aabb);

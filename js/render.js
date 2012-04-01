@@ -133,16 +133,36 @@ Renderer.prototype.render = function(game) {
   this.context_.restore();
 
   // Draw UI.
+  this.context_.font = 'bold 12px sans-serif';
+  // Time to deliver.
   var curPossession = game.player.possession();
   if (curPossession) {
     this.context_.strokeStyle = 'rgb(255, 255, 255)';
-    this.context_.fillStyle = 'rgb(0, 0, 25)';
+    this.context_.fillStyle = 'rgb(15, 128, 5)';
     this.context_.lineWidth = 2;
     this.context_.fillRect(50, 20, this.w_ - 100, 20);
     this.context_.strokeRect(50, 20, this.w_ - 100, 20);
 
     var ratio = curPossession.owner().strengthLeft();
-    this.context_.fillStyle = 'rgb(128, 23, 45)';
+    this.context_.fillStyle = 'rgb(23, 200, 45)';
     this.context_.fillRect(50, 20, ratio * (this.w_ - 100), 20);
+
+    this.context_.fillStyle = '#444';
+    this.context_.fillText('M I R T H', this.w_ / 2 - 50, 35);
   }
+
+  // Sadness bar.
+  this.context_.strokeStyle = 'rgb(255, 255, 255)';
+  this.context_.fillStyle = 'rgb(0, 0, 25)';
+  this.context_.lineWidth = 2;
+  this.context_.fillRect(50, this.h_ - 40, this.w_ - 100, 20);
+  this.context_.strokeRect(50, this.h_ - 40, this.w_ - 100, 20);
+
+  var ratio = game.sadnessToGo();
+  this.context_.fillStyle = 'rgb(128, 23, 45)';
+  this.context_.fillRect(50, this.h_ - 40, ratio * (this.w_ - 100), 20);
+
+  this.context_.fillStyle = '#ccc';
+  this.context_.fillText('W O R L D    S A D N E S S',
+      this.w_ / 2 - 90, this.h_ - 25);
 };
