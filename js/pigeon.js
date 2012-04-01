@@ -50,6 +50,13 @@ $(document).ready(function() {
 
   // +--------------------------------------------------------------------------
   // | House
+  level.addBlock(new geom.AABB(590, 956, 84, 8),
+                 Rgb.fromCss('#b22'),
+                 BlockKind.BASIC);
+  level.addBlock(new geom.AABB(592, 960, 80, 40),
+                 Rgb.fromCss('#d2b48c'),
+                 BlockKind.HOME);
+
   level.addBlock(new geom.AABB(740, 956, 84, 8),
                  Rgb.fromCss('#b22'),
                  BlockKind.BASIC);
@@ -71,6 +78,9 @@ $(document).ready(function() {
                  BlockKind.SKYSCRAPER);
   level.addBlock(new geom.AABB(250, 250, 100, 750),
                  Rgb.fromCss('#cbc'),
+                 BlockKind.SKYSCRAPER);
+  level.addBlock(new geom.AABB(350, 200, 100, 800),
+                 Rgb.fromCss('#cce'),
                  BlockKind.SKYSCRAPER);
 
   // +--------------------------------------------------------------------------

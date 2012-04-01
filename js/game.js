@@ -33,8 +33,12 @@ Game.prototype.addEnt = function(ent) {
   this.ents_.push(ent);
 };
 
-Game.prototype.removeEnt = function(ent) {
+Game.prototype.removeEnt = function(ent, opt_poof) {
+  if (ent.dead) { return; }
   ent.dead = true;
+  if (opt_poof) {
+    this.addEnt(new Poof(this, opt_poof));
+  }
   for (var i = 0; i < this.ents_.length; ++i) {
     if (this.ents_[i] == ent) {
       this.ents_[i] = null;
@@ -96,7 +100,7 @@ Game.prototype.tick = function(t) {
     }
     var y = ss.p1.y;
     y -= IMGS[IMG.BMAN].height;
-    var bman = new Bman(this, x, y, facing, 10);
+    var bman = new Bman(this, x, y, facing, 15);
 
     var p = new Possession(
         this,
@@ -302,6 +306,10 @@ Collider.prototype.tick = function(t) {
   return {
     level: levelCollisions,
     game: gameCollisions,
+    hitLevel: levelCollisions.yBlocks.length || levelCollisions.xBlocks.length,
+    hitGame: gameCollisions.yOthers.length || gameCollisions.xOthers.length,
+    hitX: levelCollisions.xBlocks.length || gameCollisions.xOthers.length,
+    hitY: levelCollisions.yBlocks.length || gameCollisions.yOthers.length,
     dtx: dtx,
     dty: dty,
     dx: dx,
@@ -324,9 +332,7 @@ Player.MAX_V_Y = 4800;
 Player.LENGTH = 20;
 Player.STROKE = 5;
 
-Player.prototype.getKind = function() {
-  return EntKind.PLAYER;
-};
+Player.prototype.kind = EntKind.PLAYER;
 
 Player.prototype.render = function(renderer) {
   var ctx = renderer.context();
@@ -404,12 +410,14 @@ Player.prototype.tick = function(t) {
   this.collider_.gravityAccel(t);
   this.collider_.vx += t * vdx;
   this.collider_.vy += t * vdy;
-  var collisions = this.collider_.tick(t);
+  var ovx = this.collider_.vx;
+  var ovy = this.collider_.vy;
+  var cs = this.collider_.tick(t);
 
   if (this.possession_ && !this.possession_.dead) {
     var pc = this.possession_.asCollider();
-    var vx = collisions.dx / t;
-    var vy = collisions.dy / t;
+    var vx = cs.dx / t;
+    var vy = cs.dy / t;
     pc.vx = vx;
     pc.vy = vy;
     var pcs = pc.tick(t);
@@ -425,17 +433,22 @@ Player.prototype.tick = function(t) {
     }
 
     var owner = this.possession_.owner();
-    if (owner && owner.acceptDelivery(this.possession_)) {
+    var magPlayer = this.collider_.mass * t * Math.sqrt(
+        (pcs.hitX || cs.hitX ? 1 : 0) * ovx * ovx +
+        (pcs.hitY || cs.hitY ? 1 : 0) * ovy * ovy);
+    if (magPlayer > 40 && (cs.hitLevel || cs.hitGame ||
+                           pcs.hitLevel || pcs.hitGame)) {
+      this.possessionDrop();
+    } else if (owner && owner.acceptDelivery(this.possession_)) {
       this.possession_ = null;
     } else if (this.game_.keyPressed('z')) {
       this.possessionDrop();
-      this.justDropped_ = true;
     }
   } else {
     this.possession_ = null;
-    for (var i = 0; i < collisions.game.yOthers.length; ++i) {
-      if (collisions.game.yOthers[i].getKind() == EntKind.POS) {
-        this.possessionHit(collisions.game.yOthers[i]);
+    for (var i = 0; i < this.game_.ents().length; ++i) {
+      if (this.game_.ents()[i] && this.game_.ents()[i].kind == EntKind.POS) {
+        this.possessionHit(this.game_.ents()[i]);
       }
     }
   }
@@ -451,8 +464,8 @@ Player.prototype.possessionHit = function(possession) {
     pickupZone.p1.x += (w - 10) / 2;
     pickupZone.p2.x -= (w - 10) / 2;
   }
-  pickupZone.p1.y -= 10;
-  pickupZone.p2.y = pickupZone.p1.y + 20;
+  pickupZone.p1.y -= 5;
+  pickupZone.p2.y = pickupZone.p1.y + 10;
 
   if (pickupZone.overlaps(this.collider_.aabb)) {
     possession.glow();
@@ -473,6 +486,7 @@ Player.prototype.possessionGet = function(possession) {
 };
 
 Player.prototype.possessionDrop = function() {
+  this.justDropped_ = this.possession_;
   var possession = this.possession_;
 
   delete possession.asCollider().ignores[getUid(this.collider_)];
@@ -529,9 +543,7 @@ Possession.prototype.dropped = function() {
   this.nabbed_ = false;
 };
 
-Possession.prototype.getKind = function() {
-  return EntKind.POS;
-};
+Possession.prototype.kind = EntKind.POS;
 
 Possession.prototype.glow = function(on) {
   this.glowing_ = 0.2;
@@ -626,15 +638,14 @@ Bman.prototype.acceptDelivery = function(p) {
   }
   var good = this.aabb_.overlaps(p.asCollider().aabb);
   if (good) {
-    this.game_.removeEnt(this);
-    this.game_.removeEnt(p);
+    this.game_.removeEnt(this, new geom.AABB(
+          this.x_, this.y_, this.sprite_.width, this.sprite_.height));
+    this.game_.removeEnt(p, p.asCollider().aabb);
   }
   return good;
 };
 
-Bman.prototype.getKind = function() {
-  return EntKind.BMAN;
-};
+Bman.prototype.kind = EntKind.BMAN;
 
 Bman.prototype.render = function(renderer) {
   var nabbed = this.possession_.nabbed_;
@@ -657,15 +668,9 @@ Bman.prototype.tick = function(t) {
     this.falling_.gravityAccel(t);
     var collisions = this.falling_.tick(t);
     if (collisions.level.yBlocks.length) {
-      this.game_.removeEnt(this);
-      this.game_.removeEnt(this.possession_);
-      var pos = this.possession_.asCollider();
-      this.game_.addEnt(new Poof(
-            this.game_,
-            this.falling_.x(), this.falling_.y(),
-            this.falling_.w(), this.falling_.h()));
-      this.game_.addEnt(new Poof(
-            this.game_, pos.x(), pos.y(), pos.w(), pos.h()));
+      this.game_.removeEnt(this, this.falling_.aabb);
+      this.game_.removeEnt(
+          this.possession_, this.possession_.asCollider().aabb);
     }
   } else if (this.jumpFrame_) {
     if (this.jumpFrame_ > 30) {
@@ -686,21 +691,21 @@ Bman.prototype.tick = function(t) {
 
 // +----------------------------------------------------------------------------
 // | Poof
-Poof = function(game, x, y, w, h, opt_t) {
+Poof = function(game, aabb, opt_t) {
   this.game = game;
-  this.x = x;
-  this.y = y;
-  this.w = w;
-  this.h = h;
+  this.x = aabb.p1.x;
+  this.y = aabb.p1.y;
+  this.w = aabb.p2.x - aabb.p1.x;
+  this.h = aabb.p2.y - aabb.p1.y;
   this.t = opt_t || 2;
   this.dx1 = randInt(-5, 5);
   this.dy1 = -3 - randInt(7);
   this.dx2 = randInt(-5, 5);
   this.dy2 = -3 - randInt(7);
-  this.sx1 = w / 3 + randInt(w) / 3;
-  this.sy1 = h / 3 + randInt(h) / 3;
-  this.sx2 = w / 3 + randInt(w) / 3;
-  this.sy2 = h / 3 + randInt(h) / 3;
+  this.sx1 = this.w / 3 + randInt(this.w) / 3;
+  this.sy1 = this.h / 3 + randInt(this.h) / 3;
+  this.sx2 = this.w / 3 + randInt(this.w) / 3;
+  this.sy2 = this.h / 3 + randInt(this.h) / 3;
   this.c1 = Poof.COLORS[randInt(Poof.COLORS.length)];
   this.c2 = Poof.COLORS[randInt(Poof.COLORS.length)];
 };
