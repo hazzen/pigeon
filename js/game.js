@@ -179,7 +179,6 @@ Collider.prototype.collideOthers = function(others, t) {
         var otherAabb = otherCollider.aabb;
         if (thisAabb.overlaps(otherAabb)) {
           var tx;
-          xOthers.push(others[i]);
           if (dx > 0) {
             tx = (otherAabb.p1.x - thisAabb.p2.x - EPSILON) / dx;
           } else {
@@ -210,7 +209,6 @@ Collider.prototype.collideOthers = function(others, t) {
         var otherAabb = otherCollider.aabb;
         if (thisAabb.overlaps(otherAabb)) {
           var ty;
-          yOthers.push(others[i]);
           if (dy > 0) {
             ty = (otherAabb.p1.y - thisAabb.p2.y - EPSILON) / dy;
           } else {
@@ -246,8 +244,23 @@ Collider.prototype.tick = function(t) {
   if (levelCollisions.xBlocks.length || gameCollisions.xOthers.length) {
     this.vx = 0;
   }
-  if (levelCollisions.yBlocks.length || gameCollisions.yOthers.length) {
+  if (levelCollisions.yBlocks.length) {
     this.vy = 0;
+    this.vx *= 0.9;
+  } else if (gameCollisions.yOthers.length) {
+    for (var i = gameCollisions.yOthers.length - 1; i >= 0; --i) {
+      var oc = gameCollisions.yOthers[i].asCollider();
+      if (this.vy != 0 && sgn(oc.vy) == sgn(this.vy)) {
+        if (this.vy > 0 && this.aabb.p1.y < oc.aabb.p1.y) {
+          this.vy = oc.vy;
+        } else if (this.vy < 0 && this.aabb.p1.y > oc.aabb.p1.y) {
+          oc.vy = this.vy;
+        }
+      } else {
+        this.vy = 0;
+        gameCollisions.yOthers[i].asCollider.vy = 0;
+      }
+    }
     this.vx *= 0.9;
   }
 
@@ -334,22 +347,28 @@ Player.prototype.tick = function(t) {
   var vdx = 0;
   var vdy = 0;
   if (this.game_.keyDown(Keys.LEFT)) {
-    vdx -= 2;
+    vdx -= 290;
   }
   if (this.game_.keyDown(Keys.RIGHT)) {
-    vdx += 2;
+    vdx += 290;
   }
   if (this.game_.keyPressed(Keys.UP)) {
-    vdy -= 50;
+    vdy -= 2800;
     this.flapAnim_ = 1;
+  } else if (this.game_.keyDown(Keys.DOWN)) {
+    if (this.collider_.vy < -5) {
+      vdy += 500;
+    } else {
+      vdy += 250;
+    }
   }
   if (this.flapAnim_) {
     this.flapAnim_ += t * FRAME_RATE;
   }
 
   this.collider_.gravityAccel(t);
-  this.collider_.vx += vdx;
-  this.collider_.vy += vdy;
+  this.collider_.vx += t * vdx;
+  this.collider_.vy += t * vdy;
   var collisions = this.collider_.tick(t);
 
   if (this.possession_) {
