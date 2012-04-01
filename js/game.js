@@ -86,7 +86,7 @@ Game.prototype.tick = function(t) {
   }
 
   var et = this.elapsedTime_;
-  var d = Math.floor(Math.max(1, 10 - et / 60));
+  var d = Math.floor(Math.max(1, 30 - et / 60));
   if (this.keyPressed('p') ||
       (Math.floor(this.elapsedTime_) % d == 1 &&
        Math.floor(this.elapsedTime_ - t) % d == 0)) {
@@ -100,7 +100,7 @@ Game.prototype.tick = function(t) {
     }
     var y = ss.p1.y;
     y -= IMGS[IMG.BMAN].height;
-    var bman = new Bman(this, x, y, facing, 15);
+    var bman = new Bman(this, x, y, facing, 30);
 
     var p = Possession.randomPossession(
         this, randInt(home.p1.x, home.p2.x), home.p1.y - 2, randFlt(5, 10));

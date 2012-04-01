@@ -30,6 +30,12 @@ Level.prototype.render = function(renderer) {
     ctx.fillStyle = block.color.toRgbString();
     ctx.fillRect(aabb.p1.x, aabb.p1.y,
                  aabb.p2.x - aabb.p1.x, aabb.p2.y - aabb.p1.y);
+    if (block.kind == BlockKind.SKYSCRAPER) {
+      ctx.fillStyle = 'rgba(60, 60, 100, 0.5)';
+      for (var y = aabb.p1.y + 20; y < aabb.p2.y; y += 40) {
+        ctx.fillRect(aabb.p1.x + 10, y, aabb.p2.x - aabb.p1.x - 20, 20);
+      }
+    }
   }
 };
 

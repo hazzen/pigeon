@@ -37,58 +37,96 @@ IMG = {
 
 IMGS = {};
 
+var genLevel = function(levelWidth, levelHeight) {
+  var level = new Level();
+
+  var SS_WIDTH_MIN = 50;
+  var SS_WIDTH_MAX = 150;
+  var HOME_WIDTH_MIN = 50;
+  var HOME_WIDTH_MAX = 150;
+  var SS_COLORS = [
+    Rgb.fromCss('#abc'),
+    Rgb.fromCss('#cbc'),
+    Rgb.fromCss('#cce')
+  ];
+  var HOME_COLORS = [
+    Rgb.fromCss('#d2b48c')
+  ];
+  var HOME_ROOF_COLORS = [
+    Rgb.fromCss('#b22')
+  ];
+  var numScrapers = Math.floor(levelWidth / SS_WIDTH_MAX / 4);
+  var numHomes = Math.floor(levelWidth / HOME_WIDTH_MAX / 4);
+  if (numScrapers < 1 || numHomes < 1) {
+    abortabortabort;
+  }
+
+  var taken = [];
+  var place = function(w) {
+    for (var tries = 0; tries < 100; ++tries) {
+      var tx = randInt(levelWidth - w);
+      var bad = false;
+      for (var i = taken.length - 1; i >= 0; --i) {
+        var b = taken[i];
+        if (!(b[0] > tx + w || b[1] < tx)) {
+          bad = true;
+          break;
+        }
+      }
+      if (!bad) {
+        return tx;
+      }
+    }
+    return -1;
+  }
+  for (var i = 0; i < numScrapers; ++i) {
+    var w = randInt(SS_WIDTH_MIN, SS_WIDTH_MAX);
+    var x = place(w);
+    if (x == -1) {
+      window.console.log('Whoops, couldnt place ith ss: ' + i);
+    } else {
+      taken.push([x, x + w]);
+      var h = randInt(levelHeight * 0.5, levelHeight * 0.9);
+      level.addBlock(new geom.AABB(x, levelHeight - h, w, h),
+                     pick(SS_COLORS),
+                     BlockKind.SKYSCRAPER);
+    }
+  }
+  for (var i = 0; i < numHomes; ++i) {
+    var w = randInt(HOME_WIDTH_MIN, HOME_WIDTH_MAX);
+    var x = place(w);
+    if (x == -1) {
+      window.console.log('Whoops, couldnt place ith home: ' + i);
+    } else {
+      taken.push([x, x + w]);
+      var h = randInt(levelHeight * 0.1, levelHeight * 0.2);
+      level.addBlock(new geom.AABB(x, levelHeight - h, w, h),
+                     pick(HOME_COLORS),
+                     BlockKind.BASIC);
+      level.addBlock(new geom.AABB(x, levelHeight - h - 8, w, 8),
+                     pick(HOME_ROOF_COLORS),
+                     BlockKind.HOME);
+    }
+  }
+
+  var bc = Rgb.fromCss('#abc');
+  level.addBlock(new geom.AABB(0, -10, levelWidth, 10), bc);
+  level.addBlock(new geom.AABB(0, levelHeight, levelWidth, 10), bc);
+  level.addBlock(new geom.AABB(-10, 0, 10, levelHeight), bc);
+  level.addBlock(new geom.AABB(levelWidth, 0, 10, levelHeight), bc);
+
+  return level;
+};
+
 $(document).ready(function() {
   var gameElem = document.getElementById('game');
   var renderer = new Renderer(gameElem, 640, 480);
-  var level = new Level(640, 480);
+  var level = genLevel(3000, 1000);
 
   var loader = new ImgLoader();
   for (var img in IMG) {
     loader.load(IMG[img])
   }
-  // Obstacles.
-
-  // +--------------------------------------------------------------------------
-  // | House
-  level.addBlock(new geom.AABB(590, 956, 84, 8),
-                 Rgb.fromCss('#b22'),
-                 BlockKind.HOME);
-  level.addBlock(new geom.AABB(592, 960, 80, 40),
-                 Rgb.fromCss('#d2b48c'),
-                 BlockKind.BASIC);
-
-  level.addBlock(new geom.AABB(740, 956, 84, 8),
-                 Rgb.fromCss('#b22'),
-                 BlockKind.HOME);
-  level.addBlock(new geom.AABB(742, 960, 80, 40),
-                 Rgb.fromCss('#d2b48c'),
-                 BlockKind.BASIC);
-
-  level.addBlock(new geom.AABB(890, 956, 84, 8),
-                 Rgb.fromCss('#b22'),
-                 BlockKind.HOME);
-  level.addBlock(new geom.AABB(892, 960, 80, 40),
-                 Rgb.fromCss('#d2b48c'),
-                 BlockKind.BASIC);
-
-  // +--------------------------------------------------------------------------
-  // | Skyscraper
-  level.addBlock(new geom.AABB(100, 150, 100, 850),
-                 Rgb.fromCss('#abc'),
-                 BlockKind.SKYSCRAPER);
-  level.addBlock(new geom.AABB(250, 250, 100, 750),
-                 Rgb.fromCss('#cbc'),
-                 BlockKind.SKYSCRAPER);
-  level.addBlock(new geom.AABB(350, 200, 100, 800),
-                 Rgb.fromCss('#cce'),
-                 BlockKind.SKYSCRAPER);
-
-  // +--------------------------------------------------------------------------
-  // | Border
-  level.addBlock(new geom.AABB(0, 0, 1640, 10), Rgb.fromCss('#abc'));
-  level.addBlock(new geom.AABB(0, 1000, 1640, 10), Rgb.fromCss('#abc'));
-  level.addBlock(new geom.AABB(0, 0, 10, 1000), Rgb.fromCss('#abc'));
-  level.addBlock(new geom.AABB(1630, 0, 10, 1000), Rgb.fromCss('#abc'));
 
   loader.whenDone(function(loaded) {
     IMGS = loaded;
