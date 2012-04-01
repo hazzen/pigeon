@@ -217,8 +217,10 @@ IMG = {
   BMAN: 'res/bman.png',
   CAT: 'res/cat.png',
   DOG_SMALL: 'res/dog_small.png',
+  BABY: 'res/baby.png',
   DOG_LARGE: 'res/dog_big.png',
   ELEPHANT: 'res/elephant.png',
+  PIANO: 'res/piano.png',
   BMAN_THUMB: 'res/bman_thumb.png',
   HEART_THUMB: 'res/possession_thumb.png'
 };

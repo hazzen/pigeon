@@ -640,7 +640,9 @@ Possession.ImgHelper.make = function(spriteKey) {
 
 Possession.CAT = Possession.ImgHelper.make(IMG.CAT);
 Possession.DOG_SMALL = Possession.ImgHelper.make(IMG.DOG_SMALL);
+Possession.BABY = Possession.ImgHelper.make(IMG.BABY);
 Possession.DOG_LARGE = Possession.ImgHelper.make(IMG.DOG_LARGE);
+Possession.PIANO = Possession.ImgHelper.make(IMG.PIANO);
 Possession.ELEPHANT = Possession.ImgHelper.make(IMG.ELEPHANT);
 
 Possession.WEIGHTS = [
@@ -648,7 +650,9 @@ Possession.WEIGHTS = [
   {minMass:  0, maxMass:  5, obj: Possession.FLOWERS},
   {minMass:  5, maxMass: 10, obj: Possession.CAT},
   {minMass:  5, maxMass: 10, obj: Possession.DOG_SMALL},
+  {minMass:  5, maxMass: 15, obj: Possession.BABY},
   {minMass: 10, maxMass: 15, obj: Possession.DOG_LARGE},
+  {minMass: 10, maxMass: 25, obj: Possession.PIANO}
   {minMass: 15, maxMass: 35, obj: Possession.ELEPHANT}
 ];
 
