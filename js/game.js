@@ -23,7 +23,7 @@ function Game(level) {
     this.addEnt(ps[i]);
   }
   var bm =[
-    new Bman(this, 145, 22)
+    new Bman(this, 145, 22, undefined, 3)
   ];
   bm[0].setPossession(ps[0]);
   for (var i = 0; i < bm.length; ++i) {
@@ -47,6 +47,7 @@ Game.prototype.addEnt = function(ent) {
 };
 
 Game.prototype.removeEnt = function(ent) {
+  ent.dead = true;
   for (var i = 0; i < this.ents_.length; ++i) {
     if (this.ents_[i] == ent) {
       this.ents_[i] = null;
@@ -158,11 +159,28 @@ Collider.fromCenter = function(game, x, y, w, h, vx, vy, mass) {
 };
 
 Collider.prototype.x = function() {
-  return (this.aabb.p1.x + this.aabb.p2.x) / 2;
+  return this.aabb.p1.x;
 };
 
 Collider.prototype.y = function() {
+  return this.aabb.p1.y;
+};
+
+
+Collider.prototype.cx = function() {
+  return (this.aabb.p1.x + this.aabb.p2.x) / 2;
+};
+
+Collider.prototype.cy = function() {
   return (this.aabb.p1.y + this.aabb.p2.y) / 2;
+};
+
+Collider.prototype.w = function() {
+  return this.w_;
+};
+
+Collider.prototype.h = function() {
+  return this.h_;
 };
 
 Collider.prototype.clampVx = function(v) {
@@ -325,8 +343,8 @@ Player.prototype.render = function(renderer) {
   ctx.strokeStyle = 'rgb(128, 128, 128)';
   ctx.lineWidth = Player.STROKE;
   ctx.beginPath();
-  ctx.moveTo(this.collider_.aabb.p1.x, this.collider_.y());
-  ctx.lineTo(this.collider_.aabb.p2.x, this.collider_.y());
+  ctx.moveTo(this.collider_.aabb.p1.x, this.collider_.cy());
+  ctx.lineTo(this.collider_.aabb.p2.x, this.collider_.cy());
   ctx.stroke();
 
   // Wing.
@@ -354,9 +372,9 @@ Player.prototype.render = function(renderer) {
     ctx.strokeStyle = 'rgb(96, 96, 96)';
     ctx.lineWidth = Player.STROKE;
     ctx.beginPath();
-    ctx.moveTo(this.collider_.x(), this.collider_.y());
-    ctx.lineTo(this.collider_.x() + xm * Player.LENGTH / 2 * dir,
-               this.collider_.y() + ym * Player.LENGTH / 2);
+    ctx.moveTo(this.collider_.cx(), this.collider_.cy());
+    ctx.lineTo(this.collider_.cx() + xm * Player.LENGTH / 2 * dir,
+               this.collider_.cy() + ym * Player.LENGTH / 2);
     ctx.stroke();
   }
 };
@@ -396,7 +414,7 @@ Player.prototype.tick = function(t) {
   this.collider_.vy += t * vdy;
   var collisions = this.collider_.tick(t);
 
-  if (this.possession_) {
+  if (this.possession_ && !this.possession_.dead) {
     var pc = this.possession_.asCollider();
     var vx = collisions.dx / t;
     var vy = collisions.dy / t;
@@ -422,6 +440,7 @@ Player.prototype.tick = function(t) {
       this.justDropped_ = true;
     }
   } else {
+    this.possession_ = null;
     for (var i = 0; i < collisions.game.yOthers.length; ++i) {
       if (collisions.game.yOthers[i].getKind() == EntKind.POS) {
         this.possessionHit(collisions.game.yOthers[i]);
@@ -527,7 +546,7 @@ Possession.prototype.glow = function(on) {
 Possession.prototype.render = function(renderer) {
   if (!renderer.boxOnScreen(this.collider_.aabb)) {
     renderer.drawIndicator(IMGS[IMG.HEART_THUMB],
-        this.collider_.x(), this.collider_.y());
+        this.collider_.cx(), this.collider_.cy());
   } else {
     var ctx = renderer.context();
     ctx.fillStyle = 'rgb(145, 180, 134)';
@@ -640,6 +659,17 @@ Bman.prototype.tick = function(t) {
   if (this.falling_) {
     this.falling_.gravityAccel(t);
     var collisions = this.falling_.tick(t);
+    if (collisions.level.yBlocks.length) {
+      this.game_.removeEnt(this);
+      this.game_.removeEnt(this.possession_);
+      var pos = this.possession_.asCollider();
+      this.game_.addEnt(new Poof(
+            this.game_,
+            this.falling_.x(), this.falling_.y(),
+            this.falling_.w(), this.falling_.h()));
+      this.game_.addEnt(new Poof(
+            this.game_, pos.x(), pos.y(), pos.w(), pos.h()));
+    }
   } else if (this.jumpFrame_) {
     if (this.jumpFrame_ > 30) {
       this.x_ += this.facing_ * this.sprite_.width;
@@ -655,4 +685,60 @@ Bman.prototype.tick = function(t) {
   } else if (this.strength_ < 0) {
     this.jumpFrame_ = 1;
   }
+};
+
+// +----------------------------------------------------------------------------
+// | Poof
+Poof = function(game, x, y, w, h, opt_t) {
+  this.game = game;
+  this.x = x;
+  this.y = y;
+  this.w = w;
+  this.h = h;
+  this.t = opt_t || 2;
+  this.dx1 = randInt(-5, 5);
+  this.dy1 = -3 - randInt(7);
+  this.dx2 = randInt(-5, 5);
+  this.dy2 = -3 - randInt(7);
+  this.sx1 = w / 3 + randInt(w) / 3;
+  this.sy1 = h / 3 + randInt(h) / 3;
+  this.sx2 = w / 3 + randInt(w) / 3;
+  this.sy2 = h / 3 + randInt(h) / 3;
+  this.c1 = Poof.COLORS[randInt(Poof.COLORS.length)];
+  this.c2 = Poof.COLORS[randInt(Poof.COLORS.length)];
+};
+
+Poof.COLORS = [
+  Rgb.fromCss('#ccc').toRgbString(),
+  Rgb.fromCss('#dcd').toRgbString(),
+  Rgb.fromCss('#ecf').toRgbString(),
+  Rgb.fromCss('#ccd').toRgbString()
+];
+
+Poof.prototype.asCollider = function() { return null; }
+
+Poof.prototype.tick = function(t) {
+  this.t -= t;
+  if (this.t < 0) {
+    this.game.removeEnt(this);
+  }
+};
+
+Poof.prototype.render = function(renderer) {
+  var ctx = renderer.context();
+  var step = this.t < 2 ? (2 - this.t) / 2 : 0;
+  ctx.globalAlpha = 1 - step;
+
+  ctx.fillStyle = this.c1;
+  ctx.fillRect(
+      this.x + step * this.dx1,
+      this.y + step * this.dy1,
+      this.sx1, this.sy1);
+  ctx.fillStyle = this.c2;
+  ctx.fillRect(
+      this.x + this.sx2 + step * this.dx2,
+      this.y + this.sy2 + step * this.dy2,
+      this.w - this.sx2, this.h - this.sy2);
+
+  ctx.globalAlpha = 1;
 };

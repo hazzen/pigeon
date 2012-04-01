@@ -115,8 +115,8 @@ Renderer.prototype.tick = function() {
 };
 
 Renderer.prototype.render = function(game) {
-  this.focusOn(game.player.asCollider().x(),
-               game.player.asCollider().y());
+  this.focusOn(game.player.asCollider().cx(),
+               game.player.asCollider().cy());
 
   this.context_.clearRect(0, 0, this.w_, this.h_);
   this.context_.fillStyle = 'rgb(50, 50, 40)';
