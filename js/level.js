@@ -27,13 +27,33 @@ Level.prototype.render = function(renderer) {
   for (var i = this.blocks_.length - 1; i >=0; --i) {
     var block = this.blocks_[i];
     var aabb = block.bounds;
-    ctx.fillStyle = block.color.toRgbString();
-    ctx.fillRect(aabb.p1.x, aabb.p1.y,
-                 aabb.p2.x - aabb.p1.x, aabb.p2.y - aabb.p1.y);
-    if (block.kind == BlockKind.SKYSCRAPER) {
-      ctx.fillStyle = 'rgba(60, 60, 100, 0.5)';
-      for (var y = aabb.p1.y + 20; y < aabb.p2.y; y += 40) {
-        ctx.fillRect(aabb.p1.x + 10, y, aabb.p2.x - aabb.p1.x - 20, 20);
+    if (renderer.boxOnScreen(aabb)) {
+      ctx.fillStyle = block.color.toRgbString();
+      ctx.fillRect(aabb.p1.x, aabb.p1.y,
+          aabb.p2.x - aabb.p1.x, aabb.p2.y - aabb.p1.y);
+      if (block.kind == BlockKind.SKYSCRAPER) {
+        ctx.fillStyle = 'rgba(60, 60, 100, 0.5)';
+        for (var y = aabb.p1.y + 20; y < aabb.p2.y; y += 40) {
+          ctx.fillRect(aabb.p1.x + 10, y, aabb.p2.x - aabb.p1.x - 20, 20);
+        }
+      }
+    } else {
+      var dir = sgn(aabb.p2.x - renderer.xOffset());
+      var dist;
+      if (dir == 1) {
+        dist = aabb.p1.x - renderer.xOffset() - renderer.width();
+      } else {
+        dist = renderer.xOffset() - aabb.p2.x;
+      }
+      var d = 400;
+      var w = 10;
+      if (dist < d) {
+        ctx.fillStyle = block.color.toRgbString();
+        ctx.globalAlpha = (d - dist) / d;
+        var x = dir == 1 ?
+          renderer.xOffset() + renderer.width() - w : renderer.xOffset();
+        ctx.fillRect(x, aabb.p1.y, w, aabb.p2.y - aabb.p1.y);
+        ctx.globalAlpha = 1;
       }
     }
   }
