@@ -102,10 +102,8 @@ Game.prototype.tick = function(t) {
     y -= IMGS[IMG.BMAN].height;
     var bman = new Bman(this, x, y, facing, 15);
 
-    var p = new Possession(
-        this,
-        new geom.AABB(randInt(home.p1.x, home.p2.x), home.p1.y - 50, 10, 15),
-        10);
+    var p = Possession.randomPossession(
+        this, randInt(home.p1.x, home.p2.x), home.p1.y - 2, randFlt(5, 10));
 
     bman.setPossession(p);
 
@@ -512,6 +510,90 @@ Possession = function(game, aabb, mass) {
   this.glowing_ = 0;
 };
 
+Possession.PICTURE_FRAME = {};
+Possession.PICTURE_FRAME.COLORS = [
+  Rgb.fromCss('#745520').toRgbString(),
+  Rgb.fromCss('#92b273').toRgbString()
+];
+Possession.PICTURE_FRAME.rndr = function(renderer) {
+  var ctx = renderer.context();
+  ctx.fillStyle = this.color_;
+  var c = this.collider_;
+  ctx.fillRect(c.x(), c.y(), c.w(), c.h());
+  if (this.glowing_ > 0) {
+    this.renderBoxGlow_(renderer);
+  }
+};
+Possession.PICTURE_FRAME.ctor = function(game, x, y, mass) {
+  var w = randInt(5, 10);
+  var h = randInt(10, 15);
+  var c = pick(Possession.PICTURE_FRAME.COLORS);
+  var pos = new Possession(game, new geom.AABB(x - w, y - h, w, h), mass);
+  pos.color_ = c;
+  pos.renderImpl_ = Possession.PICTURE_FRAME.rndr;
+  return pos;
+};
+
+Possession.FLOWERS = {};
+Possession.FLOWERS.COLORS = [
+  Rgb.fromCss('#f0e').toRgbString(),
+  Rgb.fromCss('#09f').toRgbString(),
+  Rgb.fromCss('#f21').toRgbString()
+];
+Possession.FLOWERS.rndr = function(renderer) {
+  var ctx = renderer.context();
+  var c = this.collider_;
+  ctx.fillStyle = 'rgb(200, 100, 50)';
+  ctx.beginPath();
+  ctx.moveTo(c.x() + c.w() * 0.2, c.y() + c.h());
+  ctx.lineTo(c.x(), c.y() + c.h() * 0.5);
+  ctx.lineTo(c.x() + c.w(), c.y() + c.h() * 0.5);
+  ctx.lineTo(c.x() + c.w() * 0.8, c.y() + c.h());
+  ctx.fill();
+
+  for (var i = this.flowers_.length - 1; i >= 0; --i) {
+    var flw = this.flowers_[i];
+    ctx.fillStyle = flw.color;
+    ctx.fillRect(c.x() + flw.x, c.y() + flw.y, c.h() * 0.3, c.h() * 0.3);
+  }
+  if (this.glowing_ > 0) {
+    this.renderBoxGlow_(renderer);
+  }
+};
+Possession.FLOWERS.ctor = function(game, x, y, mass) {
+  var w = 8;
+  var h = 14;
+  var pos = new Possession(game, new geom.AABB(x - w, y - h, w, h), mass);
+  var c = pick(Possession.FLOWERS.COLORS);
+  var numFlowers = randInt(1, 4);
+  pos.flowers_ = [];
+  for (var i = 0; i < numFlowers; ++i) {
+    pos.flowers_.push({
+      color: pick(Possession.FLOWERS.COLORS),
+      x: randFlt(0, w),
+      y: randFlt(0, h * 0.3)
+    });
+  }
+  pos.renderImpl_ = Possession.FLOWERS.rndr;
+  return pos;
+};
+
+Possession.WEIGHTS = [
+  {maxMass: 10, obj: Possession.PICTURE_FRAME},
+  {maxMass: 10, obj: Possession.FLOWERS}
+];
+
+Possession.randomPossession = function(game, x, y, maxMass) {
+  var possibles = [];
+  for (var i = Possession.WEIGHTS.length - 1; i >= 0; --i) {
+    var pos = Possession.WEIGHTS[i];
+    if (pos.maxMass >= maxMass && !(pos.minMass && pos.minMass >= maxMass)) {
+      possibles.push(pos.obj);
+    }
+  }
+  return pick(possibles).ctor(game, x, y, maxMass);
+};
+
 Possession.prototype.asCollider = function() {
   return this.collider_;
 };
@@ -549,25 +631,31 @@ Possession.prototype.glow = function(on) {
   this.glowing_ = 0.2;
 };
 
+Possession.prototype.renderBoxGlow_ = function(renderer) {
+  // dxhr, baby.
+  var ctx = renderer.context();
+  ctx.lineWidth = 3;
+  ctx.strokeStyle = 'rgb(197, 153, 64)';
+  var c = this.collider_;
+  ctx.strokeRect(c.x(), c.y(), c.w(), c.h());
+};
+
+Possession.prototype.renderImpl_ = function(renderer) {
+  var ctx = renderer.context();
+  ctx.fillStyle = 'rgb(145, 180, 134)';
+  var c = this.collider_;
+  ctx.fillRect(c.x(), c.y(), c.w(), c.h());
+  if (this.glowing_ > 0) {
+    this.renderBoxGlow_(renderer);
+  }
+};
+
 Possession.prototype.render = function(renderer) {
   if (!renderer.boxOnScreen(this.collider_.aabb)) {
     renderer.drawIndicator(IMGS[IMG.HEART_THUMB],
         this.collider_.cx(), this.collider_.cy());
   } else {
-    var ctx = renderer.context();
-    ctx.fillStyle = 'rgb(145, 180, 134)';
-    var x = this.collider_.aabb.p1.x;
-    var y = this.collider_.aabb.p1.y;
-    var w = this.collider_.aabb.p2.x - x;
-    var h = this.collider_.aabb.p2.y - y;
-    ctx.fillRect(x, y, w, h);
-
-    if (this.glowing_ > 0) {
-      // dxhr, baby.
-      ctx.lineWidth = 3;
-      ctx.strokeStyle = 'rgb(197, 153, 64)';
-      ctx.strokeRect(x, y, w, h);
-    }
+    this.renderImpl_(renderer);
   }
 };
 
@@ -706,8 +794,8 @@ Poof = function(game, aabb, opt_t) {
   this.sy1 = this.h / 3 + randInt(this.h) / 3;
   this.sx2 = this.w / 3 + randInt(this.w) / 3;
   this.sy2 = this.h / 3 + randInt(this.h) / 3;
-  this.c1 = Poof.COLORS[randInt(Poof.COLORS.length)];
-  this.c2 = Poof.COLORS[randInt(Poof.COLORS.length)];
+  this.c1 = pick(Poof.COLORS);
+  this.c2 = pick(Poof.COLORS);
 };
 
 Poof.COLORS = [

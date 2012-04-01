@@ -53,10 +53,11 @@ Renderer.prototype.pointOnScreen = function(x, y) {
 Renderer.prototype.drawSpriteOrThumb = function(x, y, sprite, thumb, hl) {
   var cx = x + sprite.width / 2;
   var cy = y + sprite.height / 2;
-  if (this.pointOnScreen(cx, cy)) {
-    this.context_.drawImage(sprite, x, y);
-  } else {
+  if (!this.pointOnScreen(cx, cy)) {
     this.drawIndicator(thumb, cx, cy, hl);
+  }
+  if (this.boxOnScreen(new geom.AABB(x, y, sprite.width, sprite.height))) {
+    this.context_.drawImage(sprite, x, y);
   }
 };
 

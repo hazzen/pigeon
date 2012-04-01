@@ -8,14 +8,9 @@ BlockKind = {
   BACKGROUND: 4
 };
 
-function Level(width, height) {
-  this.width_ = width;
-  this.height_ = height;
+function Level() {
   this.blocks_ = [];
 };
-
-Level.prototype.width = function() { return this.width_; };
-Level.prototype.height = function() { return this.height_; };
 
 Level.prototype.addBlock = function(aabb, color, opt_kind) {
   this.blocks_.push({

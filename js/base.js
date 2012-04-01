@@ -15,6 +15,16 @@ function makeSet() {
   return set;
 };
 
+function randFlt(a, opt_b) {
+  var low = 0;
+  var high = a;
+  if (opt_b != undefined) {
+    low = a;
+    high = opt_b;
+  }
+  return low + Math.random() * (high - low);
+};
+
 function randInt(a, opt_b) {
   var low = 0;
   var high = a;
@@ -22,7 +32,13 @@ function randInt(a, opt_b) {
     low = a;
     high = opt_b;
   }
+  low = Math.ceil(low);
+  high = Math.ceil(high);
   return low + Math.floor(Math.random() * (high - low));
+};
+
+function pick(arr) {
+  return arr[randInt(arr.length)];
 };
 
 function sgn(n) {

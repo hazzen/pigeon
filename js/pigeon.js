@@ -52,24 +52,24 @@ $(document).ready(function() {
   // | House
   level.addBlock(new geom.AABB(590, 956, 84, 8),
                  Rgb.fromCss('#b22'),
-                 BlockKind.BASIC);
+                 BlockKind.HOME);
   level.addBlock(new geom.AABB(592, 960, 80, 40),
                  Rgb.fromCss('#d2b48c'),
-                 BlockKind.HOME);
+                 BlockKind.BASIC);
 
   level.addBlock(new geom.AABB(740, 956, 84, 8),
                  Rgb.fromCss('#b22'),
-                 BlockKind.BASIC);
+                 BlockKind.HOME);
   level.addBlock(new geom.AABB(742, 960, 80, 40),
                  Rgb.fromCss('#d2b48c'),
-                 BlockKind.HOME);
+                 BlockKind.BASIC);
 
   level.addBlock(new geom.AABB(890, 956, 84, 8),
                  Rgb.fromCss('#b22'),
-                 BlockKind.BASIC);
+                 BlockKind.HOME);
   level.addBlock(new geom.AABB(892, 960, 80, 40),
                  Rgb.fromCss('#d2b48c'),
-                 BlockKind.HOME);
+                 BlockKind.BASIC);
 
   // +--------------------------------------------------------------------------
   // | Skyscraper
