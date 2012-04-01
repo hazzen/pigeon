@@ -37,6 +37,7 @@ var genLevel = function(levelWidth, levelHeight) {
   var HOME_WIDTH_MIN = 50;
   var HOME_WIDTH_MAX = 150;
   var HOME_SPACE_WIDTH = 256;
+  var TOP_SPACE = 256;
   var SS_COLORS = [
     Rgb.fromCss('#abc'),
     Rgb.fromCss('#cbc'),
@@ -79,7 +80,7 @@ var genLevel = function(levelWidth, levelHeight) {
       window.console.log('Whoops, couldnt place ith ss: ' + i);
     } else {
       taken.push([x, x + w]);
-      var h = randInt(levelHeight * 0.5, levelHeight * 0.9);
+      var h = randInt(levelHeight * 0.5, levelHeight - TOP_SPACE);
       level.addBlock(new geom.AABB(x, levelHeight - h, w, h),
                      pick(SS_COLORS),
                      BlockKind.SKYSCRAPER);
@@ -116,7 +117,6 @@ var genLevel = function(levelWidth, levelHeight) {
 $(document).ready(function() {
   var gameElem = document.getElementById('game');
   var renderer = new Renderer(gameElem, 640, 480);
-  var level = genLevel(5000, 1000);
 
   var loader = new ImgLoader();
   for (var img in IMG) {
@@ -126,13 +126,16 @@ $(document).ready(function() {
   loader.whenDone(function(loaded) {
     IMGS = loaded;
 
+    var level = genLevel(5000, 1000);
     var game = new Game(level);
-    $(gameElem).keydown(bind(game, game.onKeyDown));
-    $(gameElem).keyup(bind(game, game.onKeyUp));
+    $(gameElem).keydown(KB.onKeyDown);
+    $(gameElem).keyup(KB.onKeyUp);
 
     $(gameElem).blur(function() {
       game.paused = true;
     });
+
+    game.gameOver();
 
     var lastFrame = new Date().getTime();
     (function renderLoop() {
@@ -146,13 +149,42 @@ $(document).ready(function() {
           numFrames = 1;
         }
       }
-      for (var i = 0; i < numFrames; i++) {
-        game.tick(1 / FRAME_RATE);
+      KB.tickHandleInput_();
+      if (!game.isOver()) {
+        if (KB.keyPressed('q')) {
+          game.gameOver();
+        }
+        for (var i = 0; i < numFrames; i++) {
+          game.tick(1 / FRAME_RATE);
+        }
+        if (!game.paused) {
+          renderer.tick();
+        }
+        renderer.render(game);
+        if (game.sadnessToGo() > 1) {
+          game.gameOver();
+        }
+      } else {
+        var ctx = renderer.context();
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+        ctx.fillRect(0, 0, renderer.width(), renderer.height());
+        ctx.font = 'bold 12px sans-serif';
+        ctx.fillStyle = '#ccc';
+        ctx.fillText('Y O U   L O S E', 50, 125);
+        ctx.fillText('the world is sad', 50, 140);
+        ctx.fillText('press x to try to make the world happy', 50, 155);
+        ctx.fillText('to make the world a happy place, make businessmen feel loved', 50, 185);
+        ctx.fillText('by bringing them items from their home', 50, 200);
+        ctx.fillText('this is hard becaues you are a pigeon', 50, 230);
+        ctx.fillText('left and right arrows to steer left/right', 50, 260);
+        ctx.fillText('up to flap and down to dive', 50, 275);
+        ctx.fillText('z to pick up/drop items', 50, 290);
+        ctx.fillText('your bird-dar lets you know of men in need and where to find their love', 50, 320);
+        if (KB.keyDown('x')) {
+          game.newGame(genLevel(5000, 1000));
+        }
       }
-      if (!game.paused) {
-        renderer.tick();
-      }
-      renderer.render(game);
+
       if (game.paused) {
         var ctx = renderer.context();
         ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
@@ -160,8 +192,8 @@ $(document).ready(function() {
         ctx.font = 'bold 12px sans-serif';
         ctx.fillStyle = '#ccc';
         ctx.fillText('P A U S E D', 50, 80);
-        ctx.fillText('press z to continue', 50, 95);
-        if (game.keyDown('z')) {
+        ctx.fillText('press x to continue', 50, 95);
+        if (KB.keyDown('x')) {
           game.paused = false;
         }
       }

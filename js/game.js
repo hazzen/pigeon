@@ -9,15 +9,7 @@ EntKind = {
 // +----------------------------------------------------------------------------
 // | Game
 function Game(level) {
-  this.level_ = level;
-  this.keyDown_ = {};
-  this.keyDownCounts_ = {};
-  this.player = new Player(this);
-  this.elapsedTime_ = 0;
-  this.nextSpawn_ = 5;
-  this.globalSadness_ = 10;
-
-  this.ents_ = [this.player];
+  this.newGame(level);
 };
 
 Game.prototype.width = function() { return this.level_.width(); };
@@ -38,6 +30,30 @@ Game.prototype.setSadness = function(sad) {
 
 Game.prototype.sadnessToGo = function() {
   return this.globalSadness_ / 100;
+};
+
+Game.prototype.isOver = function() {
+  return this.globalSadness_ == -1;
+};
+
+Game.prototype.newGame = function(level) {
+  this.level_ = level;
+  this.player = new Player(this);
+  this.elapsedTime_ = 0;
+  this.nextSpawn_ = 5;
+  this.globalSadness_ = 10;
+
+  this.ents_ = [this.player];
+};
+
+Game.prototype.gameOver = function() {
+  this.globalSadness_ = -1;
+  for (var i = 0; i < this.ents_; ++i) {
+    if (this.ents_[i]) {
+      this.ents_[i].dead = true;
+      this.ents_[i] = null;
+    }
+  }
 };
 
 Game.prototype.addEnt = function(ent) {
@@ -64,35 +80,38 @@ Game.prototype.removeEnt = function(ent, opt_poof) {
   }
 };
 
-Game.prototype.keyPressed = function(chr) {
-  return this.keyDown(chr) == 1;
+KB = {};
+KB.keyDown_ = {};
+KB.keyDownCounts_ = {};
+
+KB.keyPressed = function(chr) {
+  return KB.keyDown(chr) == 1;
 };
 
-Game.prototype.keyDown = function(chr) {
+KB.keyDown = function(chr) {
   if (typeof(chr) == 'string') {
-    return this.keyDownCounts_[chr.toUpperCase().charCodeAt(0)];
+    return KB.keyDownCounts_[chr.toUpperCase().charCodeAt(0)];
   } else {
-    return this.keyDownCounts_[chr];
+    return KB.keyDownCounts_[chr];
   }
 };
 
-Game.prototype.tickHandleInput_ = function(t) {
-  $.each(this.keyDown_, bind(this, function(key, value) {
-      if (this.keyDownCounts_[key]) {
-        this.keyDownCounts_[key]++;
+KB.tickHandleInput_ = function() {
+  $.each(KB.keyDown_, function(key, value) {
+      if (KB.keyDownCounts_[key]) {
+        KB.keyDownCounts_[key]++;
       } else {
-        this.keyDownCounts_[key] = 1;
+        KB.keyDownCounts_[key] = 1;
       }
-  }));
-  $.each(this.keyDownCounts_, bind(this, function(key, value) {
-      if (!this.keyDown_[key]) {
-        this.keyDownCounts_[key] = 0;
+  });
+  $.each(KB.keyDownCounts_, function(key, value) {
+      if (!KB.keyDown_[key]) {
+        KB.keyDownCounts_[key] = 0;
       }
-  }));
+  });
 };
 
 Game.prototype.tick = function(t) {
-  this.tickHandleInput_(t);
   if (this.paused) return;
 
   this.elapsedTime_ += t;
@@ -108,7 +127,7 @@ Game.prototype.tick = function(t) {
   // +-------------------------------------------------------------------------
   // |DEBUG
   for (var i = 0; i < Possession.WEIGHTS.length; ++i) {
-    if (this.keyPressed('' + i)) {
+    if (KB.keyPressed('' + i)) {
       var posStruct = Possession.WEIGHTS[i];
       var pos = posStruct.obj.ctor(
           this,
@@ -121,7 +140,7 @@ Game.prototype.tick = function(t) {
   // +-------------------------------------------------------------------------
 
   }
-  if (this.keyPressed('p') ||
+  if (KB.keyPressed('p') ||
       this.nextSpawn_ < this.elapsedTime_) {
     var d = Math.floor(Math.max(5, START_D - this.elapsedTime_ / INC_RATE_SEC));
     this.nextSpawn_ = this.elapsedTime_ + randFlt(1 + d / 2, 1 + d);
@@ -157,14 +176,14 @@ Game.prototype.render = function(renderer) {
   }
 };
 
-Game.prototype.onKeyDown = function(event) {
-  this.keyDown_[event.keyCode] = true;
+KB.onKeyDown = function(event) {
+  KB.keyDown_[event.keyCode] = true;
   event.preventDefault();
   return false;
 };
 
-Game.prototype.onKeyUp = function(event) {
-  this.keyDown_[event.keyCode] = false;
+KB.onKeyUp = function(event) {
+  KB.keyDown_[event.keyCode] = false;
   event.preventDefault();
   return false;
 };
@@ -404,9 +423,9 @@ Player.prototype.render = function(renderer) {
     if (this.collider_.vx > 0) {
       dir = -1;
     }
-    if (this.game_.keyDown(Keys.LEFT)) {
+    if (KB.keyDown(Keys.LEFT)) {
       dir = 1;
-    } else if (this.game_.keyDown(Keys.RIGHT)) {
+    } else if (KB.keyDown(Keys.RIGHT)) {
       dir = -1;
     }
     var theta = 0;
@@ -435,21 +454,21 @@ Player.prototype.asCollider = function() {
 };
 
 Player.prototype.tick = function(t) {
-  if (!this.game_.keyDown('z')) {
+  if (!KB.keyDown('z')) {
     this.justDropped_ = false;
   }
   var vdx = 0;
   var vdy = 0;
-  if (this.game_.keyDown(Keys.LEFT)) {
+  if (KB.keyDown(Keys.LEFT)) {
     vdx -= 290;
   }
-  if (this.game_.keyDown(Keys.RIGHT)) {
+  if (KB.keyDown(Keys.RIGHT)) {
     vdx += 290;
   }
-  if (this.game_.keyPressed(Keys.UP)) {
+  if (KB.keyPressed(Keys.UP)) {
     vdy -= Player.MAX_V_Y / 2;
     this.flapAnim_ = 1;
-  } else if (this.game_.keyDown(Keys.DOWN)) {
+  } else if (KB.keyDown(Keys.DOWN)) {
     if (this.collider_.vy < -5) {
       vdy += 500;
     } else {
@@ -508,7 +527,7 @@ Player.prototype.tick = function(t) {
       this.possessionDrop();
     } else if (owner && owner.acceptDelivery(this.possession_)) {
       this.possession_ = null;
-    } else if (this.game_.keyPressed('z')) {
+    } else if (KB.keyPressed('z')) {
       this.possessionDrop();
     }
   } else {
@@ -531,7 +550,7 @@ Player.prototype.possessionHit = function(possession) {
 
   if (pickupZone.overlaps(this.collider_.aabb)) {
     possession.glow();
-    if (this.game_.keyDown('z') && !this.justDropped_) {
+    if (KB.keyDown('z') && !this.justDropped_) {
       this.possessionGet(possession);
     }
   }
