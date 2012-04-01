@@ -104,6 +104,23 @@ Game.prototype.tick = function(t) {
 
   var INC_RATE_SEC = 5;
   var START_D = 30;
+
+  // +-------------------------------------------------------------------------
+  // |DEBUG
+  for (var i = 0; i < Possession.WEIGHTS.length; ++i) {
+    if (this.keyPressed('' + i)) {
+      var posStruct = Possession.WEIGHTS[i];
+      var pos = posStruct.obj.ctor(
+          this,
+          this.player.collider_.x() - 10,
+          this.player.collider_.y() - 10,
+          0.5 * (posStruct.minMass + posStruct.maxMass));
+      this.addEnt(pos);
+    }
+  // |DEBUG
+  // +-------------------------------------------------------------------------
+
+  }
   if (this.keyPressed('p') ||
       this.nextSpawn_ < this.elapsedTime_) {
     var d = Math.floor(Math.max(5, START_D - this.elapsedTime_ / INC_RATE_SEC));
@@ -238,18 +255,19 @@ Collider.prototype.collideOthers = function(others, t) {
         if (thisAabb.overlaps(otherAabb)) {
           var tx;
           if (dx > 0) {
-            tx = (otherAabb.p1.x - thisAabb.p2.x - EPSILON) / dx;
+            tx = (otherAabb.p1.x - thisAabb.p2.x - EPSILON) / -dx;
           } else {
-            tx = (otherAabb.p2.x - thisAabb.p1.x + EPSILON) / dx;
+            tx = (otherAabb.p2.x - thisAabb.p1.x + EPSILON) / -dx;
           }
           ntx = Math.min(tx, ntx);
           xOthers.push(others[i]);
         }
       }
     }
-    thisAabb.p1.x -= dx - ntx * dx;
-    thisAabb.p2.x -= dx - ntx * dx;
   }
+  thisAabb = this.aabb.clone();
+  thisAabb.p1.x += t * ntx * dx;
+  thisAabb.p2.x += t * ntx * dx;
 
   var dy = this.vy * t;
   var nty = 1;
@@ -268,9 +286,9 @@ Collider.prototype.collideOthers = function(others, t) {
         if (thisAabb.overlaps(otherAabb)) {
           var ty;
           if (dy > 0) {
-            ty = (otherAabb.p1.y - thisAabb.p2.y - EPSILON) / dy;
+            ty = (otherAabb.p1.y - thisAabb.p2.y - EPSILON) / -dy;
           } else {
-            ty = (otherAabb.p2.y - thisAabb.p1.y + EPSILON) / dy;
+            ty = (otherAabb.p2.y - thisAabb.p1.y + EPSILON) / -dy;
           }
           nty = Math.min(ty, nty);
           yOthers.push(others[i]);
@@ -290,7 +308,7 @@ Collider.prototype.tick = function(t) {
   this.ovx = this.vx;
   this.ovy = this.vy;
   var levelCollisions = this.game.level().collides(
-      this.aabb.clone(), this.vx * t, this.vy * t, this.ignoreBlocks);
+      this.aabb, this.vx * t, this.vy * t, this.ignoreBlocks);
   var gameCollisions = this.collideOthers(this.game.ents(), t);
   var dtx = Math.max(0, Math.min(levelCollisions.dtx, gameCollisions.dtx));
   var dty = Math.max(0, Math.min(levelCollisions.dty, gameCollisions.dty));
@@ -446,6 +464,22 @@ Player.prototype.tick = function(t) {
   this.collider_.vx += t * vdx;
   this.collider_.vy += t * vdy;
   var cs = this.collider_.tick(t);
+
+  // Bump any item we hit if it is an up collision.
+  for (var i = 0; i < cs.game.yOthers.length; ++i) {
+    var other = cs.game.yOthers[i].asCollider();
+    if (Math.abs(other.aabb.p2.y - this.collider_.aabb.p1.y) < 5) {
+      var mod = cs.dy + t * 0.5 * (this.collider_.ovy + this.collider_.vy);
+      mod = -Math.abs(mod);
+      other.aabb.p1.y += mod;
+      other.aabb.p2.y += mod;
+      if (other.ovy > -1 ||
+          (other.ovy > -10 && other.ovy > this.collider_.ovy)) {
+        other.vy += mod / t;
+      }
+      window.console.log(other.ovy + ' ' + this.collider_.ovy);
+    }
+  }
 
   if (this.possession_ && !this.possession_.dead) {
     var pc = this.possession_.asCollider();
@@ -652,7 +686,7 @@ Possession.WEIGHTS = [
   {minMass:  5, maxMass: 10, obj: Possession.DOG_SMALL},
   {minMass:  5, maxMass: 15, obj: Possession.BABY},
   {minMass: 10, maxMass: 15, obj: Possession.DOG_LARGE},
-  {minMass: 10, maxMass: 25, obj: Possession.PIANO}
+  {minMass: 10, maxMass: 25, obj: Possession.PIANO},
   {minMass: 15, maxMass: 35, obj: Possession.ELEPHANT}
 ];
 

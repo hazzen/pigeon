@@ -59,11 +59,12 @@ Level.prototype.render = function(renderer) {
   }
 };
 
-Level.prototype.collides = function(aabb, dx, dy, ignoreBlocks) {
+Level.prototype.collides = function(oaabb, dx, dy, ignoreBlocks) {
   var collisions = {};
   var xBlocks = [];
   var yBlocks = [];
 
+  var aabb = oaabb.clone();
   var ntx = 1;
   if (dx != 0) {
     if (dx < 0) {
@@ -79,17 +80,18 @@ Level.prototype.collides = function(aabb, dx, dy, ignoreBlocks) {
       if (bound.overlaps(aabb)) {
         var tx;
         if (dx > 0) {
-          tx = (bound.p1.x - aabb.p2.x - EPSILON) / dx;
+          tx = (bound.p1.x - aabb.p2.x - EPSILON) / -dx;
         } else {
-          tx = (bound.p2.x - aabb.p1.x + EPSILON) / dx;
+          tx = (bound.p2.x - aabb.p1.x + EPSILON) / -dx;
         }
         xBlocks.push(block);
         ntx = Math.min(tx, ntx);
       }
     }
-    aabb.p1.x -= dx - ntx * dx;
-    aabb.p2.x -= dx - ntx * dx;
   }
+  aabb = oaabb.clone();
+  aabb.p1.x += ntx * dx;
+  aabb.p2.x += ntx * dx;
 
   var nty = 1;
   if (dy != 0) {
