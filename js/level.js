@@ -8,7 +8,9 @@ BlockKind = {
   BACKGROUND: 4
 };
 
-function Level() {
+function Level(w, h) {
+  this.w = w;
+  this.h = h;
   this.blocks_ = [];
 };
 
@@ -78,14 +80,8 @@ Level.prototype.collides = function(oaabb, dx, dy, ignoreBlocks) {
       if (block.kind == BlockKind.BACKGROUND) continue;
       if (ignoreBlocks && block.kind in ignoreBlocks) continue;
       if (bound.overlaps(aabb)) {
-        var tx;
-        if (dx > 0) {
-          tx = (bound.p1.x - aabb.p2.x - EPSILON) / -dx;
-        } else {
-          tx = (bound.p2.x - aabb.p1.x + EPSILON) / -dx;
-        }
         xBlocks.push(block);
-        ntx = Math.min(tx, ntx);
+        ntx = 0;
       }
     }
   }
@@ -106,14 +102,8 @@ Level.prototype.collides = function(oaabb, dx, dy, ignoreBlocks) {
       if (block.kind == BlockKind.BACKGROUND) continue;
       if (ignoreBlocks && block.kind in ignoreBlocks) continue;
       if (bound.overlaps(aabb)) {
-        var ty;
-        if (dy > 0) {
-          ty = (bound.p1.y - aabb.p2.y - EPSILON) / dy;
-        } else {
-          ty = (bound.p2.y - aabb.p1.y + EPSILON) / dy;
-        }
         yBlocks.push(block);
-        nty = Math.min(ty, nty);
+        nty = 0;
       }
     }
   }

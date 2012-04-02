@@ -72,7 +72,7 @@ Renderer.prototype.drawIndicator = function(img, tx, ty, hl) {
   } else if (ty + img.height > this.yOff_ + this.h_) {
     ty = this.yOff_ + this.h_ - img.height;
   }
-  this.context_.lineWidth = 6;
+  this.context_.lineWidth = hl ? 12 : 6;
   this.context_.strokeStyle = hl ? 'rgb(197, 153, 64)' : 'rgb(0, 0, 0)';
   this.context_.strokeRect(tx, ty, img.width, img.height);
   this.context_.drawImage(img, tx, ty);
@@ -118,6 +118,12 @@ Renderer.prototype.tick = function() {
   this.aabb_.p2.y = this.yOff_ + this.h_;
 };
 
+SPEED_GRID = [
+  [10, 14], [26, 12], [36,  0], [50,  8], [80, 20],
+  [ 5, 39], [32, 26], [42, 42], [63, 38], [95, 50],
+  [27, 63], [47, 86], [83, 75], [99, 73]
+];
+
 Renderer.prototype.render = function(game) {
   this.focusOn(game.player.asCollider().cx(),
                game.player.asCollider().cy());
@@ -129,6 +135,27 @@ Renderer.prototype.render = function(game) {
   this.context_.save();
   this.context_.translate(-Math.round(this.xOff_) + 0.5,
                           -Math.round(this.yOff_) + 0.5);
+
+  // Draw a grid to see motion speed.
+  this.context_.fillStyle = 'rgb(128, 128, 128)';
+  var ox = this.xOff_ % this.w_;
+  var oy = this.yOff_ % this.h_;
+  for (var i = SPEED_GRID.length - 1; i >= 0; --i) {
+    var tx = this.w_ * SPEED_GRID[i][0] / 100;
+    var ty = this.h_ * SPEED_GRID[i][1] / 100;
+    if (tx < ox) {
+      tx += this.w_;
+    }
+    if (ty < oy) {
+      ty += this.h_;
+    }
+    tx += this.xOff_ - ox;
+    ty += this.yOff_ - oy;
+    if (tx >= 0 && tx <= game.width() && ty >= 0 && ty <= game.height()) {
+      this.context_.fillRect(tx, ty, 5, 5);
+    }
+  }
+
   game.render(this);
   this.context_.restore();
 

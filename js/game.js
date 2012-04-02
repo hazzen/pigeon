@@ -12,8 +12,8 @@ function Game(level) {
   this.newGame(level);
 };
 
-Game.prototype.width = function() { return this.level_.width(); };
-Game.prototype.height = function() { return this.level_.height(); };
+Game.prototype.width = function() { return this.level_.w; };
+Game.prototype.height = function() { return this.level_.h; };
 Game.prototype.level = function() { return this.level_; };
 Game.prototype.ents = function() { return this.ents_; };
 Game.prototype.sadness = function() { return this.globalSadness_; };
@@ -124,23 +124,21 @@ Game.prototype.tick = function(t) {
   var INC_RATE_SEC = 5;
   var START_D = 30;
 
-  // +-------------------------------------------------------------------------
-  // |DEBUG
-  for (var i = 0; i < Possession.WEIGHTS.length; ++i) {
-    if (KB.keyPressed('' + i)) {
-      var posStruct = Possession.WEIGHTS[i];
-      var pos = posStruct.obj.ctor(
-          this,
-          this.player.collider_.x() - 10,
-          this.player.collider_.y() - 10,
-          0.5 * (posStruct.minMass + posStruct.maxMass));
-      this.addEnt(pos);
-    }
-  // |DEBUG
-  // +-------------------------------------------------------------------------
+  if (DEBUG) {
+    for (var i = 0; i < Possession.WEIGHTS.length; ++i) {
+      if (KB.keyPressed('' + i)) {
+        var posStruct = Possession.WEIGHTS[i];
+        var pos = posStruct.obj.ctor(
+            this,
+            this.player.collider_.x() - 10,
+            this.player.collider_.y() - 10,
+            0.5 * (posStruct.minMass + posStruct.maxMass));
+        this.addEnt(pos);
+      }
+  }
 
   }
-  if (KB.keyPressed('p') ||
+  if ((DEBUG && KB.keyPressed('p')) ||
       this.nextSpawn_ < this.elapsedTime_) {
     var d = Math.floor(Math.max(5, START_D - this.elapsedTime_ / INC_RATE_SEC));
     this.nextSpawn_ = this.elapsedTime_ + randFlt(1 + d / 2, 1 + d);
@@ -496,7 +494,6 @@ Player.prototype.tick = function(t) {
           (other.ovy > -10 && other.ovy > this.collider_.ovy)) {
         other.vy += mod / t;
       }
-      window.console.log(other.ovy + ' ' + this.collider_.ovy);
     }
   }
 
@@ -728,6 +725,9 @@ Possession.prototype.tick = function(t) {
   if (this.falling_) {
     this.collider_.gravityAccel(t);
     this.collider_.tick(t);
+    if (Math.abs(this.vx_) + Math.abs(this.vy_) > 2) {
+      owner.acceptDelivery(this);
+    }
   }
   this.glowing_ -= t;
 };

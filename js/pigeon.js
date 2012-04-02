@@ -30,12 +30,12 @@ ImgLoader.prototype.oneLoaded_ = function(img, src) {
 };
 
 var genLevel = function(levelWidth, levelHeight) {
-  var level = new Level();
+  var level = new Level(levelWidth, levelHeight);
 
   var SS_WIDTH_MIN = 50;
   var SS_WIDTH_MAX = 150;
   var HOME_WIDTH_MIN = 50;
-  var HOME_WIDTH_MAX = 150;
+  var HOME_WIDTH_MAX = 100;
   var HOME_SPACE_WIDTH = 256;
   var TOP_SPACE = 256;
   var SS_COLORS = [
@@ -77,7 +77,9 @@ var genLevel = function(levelWidth, levelHeight) {
     var w = randInt(SS_WIDTH_MIN, SS_WIDTH_MAX);
     var x = place(w);
     if (x == -1) {
-      window.console.log('Whoops, couldnt place ith ss: ' + i);
+      if (DEBUG) {
+        window.console.log('Whoops, couldnt place ith ss: ' + i);
+      }
     } else {
       taken.push([x, x + w]);
       var h = randInt(levelHeight * 0.5, levelHeight - TOP_SPACE);
@@ -90,7 +92,9 @@ var genLevel = function(levelWidth, levelHeight) {
     var w = randInt(HOME_WIDTH_MIN, HOME_WIDTH_MAX);
     var x = place(w + HOME_SPACE_WIDTH);
     if (x == -1) {
-      window.console.log('Whoops, couldnt place ith home: ' + i);
+      if (DEBUG) {
+        window.console.log('Whoops, couldnt place ith home: ' + i);
+      }
     } else {
       taken.push([x, x + w + HOME_SPACE_WIDTH]);
       var h = randInt(levelHeight * 0.1, levelHeight * 0.2);
@@ -144,14 +148,16 @@ $(document).ready(function() {
       var numFrames = Math.floor((now - lastFrame) / (1000 / FRAME_RATE));
       lastFrame = lastFrame + numFrames * (1000 / FRAME_RATE);
       if (numFrames > 1) {
-        window.console.log(now, lastFrame, numFrames);
+        if (DEBUG) {
+          window.console.log(now, lastFrame, numFrames);
+        }
         if (numFrames > 5) {
           numFrames = 1;
         }
       }
       KB.tickHandleInput_();
       if (!game.isOver()) {
-        if (KB.keyPressed('q')) {
+        if (DEBUG && KB.keyPressed('q')) {
           game.gameOver();
         }
         for (var i = 0; i < numFrames; i++) {
@@ -193,7 +199,7 @@ $(document).ready(function() {
         ctx.fillStyle = '#ccc';
         ctx.fillText('P A U S E D', 50, 80);
         ctx.fillText('press x to continue', 50, 95);
-        if (KB.keyDown('x')) {
+        if (KB.keyPressed('x')) {
           game.paused = false;
         }
       }
