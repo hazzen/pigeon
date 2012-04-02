@@ -164,6 +164,7 @@ $(document).ready(function() {
         }
         for (var i = 0; i < numFrames; i++) {
           game.tick(1 / FRAME_RATE);
+          if (i) KB.tickHandleInput_();
         }
         if (!game.paused) {
           renderer.tick();
