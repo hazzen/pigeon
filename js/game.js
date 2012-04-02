@@ -522,6 +522,7 @@ Player.prototype.tick = function(t) {
     }
   } else {
     this.possession_ = null;
+    this.collider_.mass = 10;
     for (var i = 0; i < this.game_.ents().length; ++i) {
       if (this.game_.ents()[i] && this.game_.ents()[i].kind == EntKind.POS) {
         this.possessionHit(this.game_.ents()[i]);
@@ -562,7 +563,6 @@ Player.prototype.possessionDrop = function() {
 
   delete possession.asCollider().ignores[getUid(this.collider_)];
   delete this.collider_.ignores[getUid(possession.asCollider())];
-  this.collider_.mass = 10;
   possession.collider_.vx = this.collider_.vx;
   possession.collider_.vy = this.collider_.vy;
   possession.dropped();
