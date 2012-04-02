@@ -221,9 +221,28 @@ IMG = {
   BABY: 'res/baby.png',
   DOG_LARGE: 'res/dog_big.png',
   ELEPHANT: 'res/elephant.png',
+  WIFE: 'res/wife.png',
   PIANO: 'res/piano.png',
   BMAN_THUMB: 'res/bman_thumb.png',
   HEART_THUMB: 'res/possession_thumb.png'
 };
 
 IMGS = {};
+IMGS_FLIPPED = {};
+
+IMGS.getFlipped = function(img) {
+  var flipped = IMGS_FLIPPED[img];
+  if (flipped) {
+    return flipped;
+  } else {
+    var spr = IMGS[img];
+    var offscreen = document.createElement('canvas');
+    offscreen.width = spr.width;
+    offscreen.height = spr.height;
+    var ctx = offscreen.getContext('2d');
+    ctx.scale(-1, 1);
+    ctx.drawImage(spr, -spr.width, 0);
+    IMGS_FLIPPED[img] = offscreen;;
+    return offscreen;
+  }
+};

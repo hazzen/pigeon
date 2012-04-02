@@ -128,7 +128,9 @@ $(document).ready(function() {
   }
 
   loader.whenDone(function(loaded) {
-    IMGS = loaded;
+    for (var path in loaded) {
+      IMGS[path] = loaded[path];
+    }
 
     var level = genLevel(5000, 1000);
     var game = new Game(level);

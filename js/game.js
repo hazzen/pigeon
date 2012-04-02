@@ -662,14 +662,21 @@ Possession.ImgHelper = {};
 Possession.ImgHelper.rndr = function(renderer) {
   var ctx = renderer.context();
   var c = this.collider_;
-  ctx.drawImage(this.sprite_, c.x(), c.y());
+  var ownerx = this.owner_.getX();
+  var spr;
+  if (ownerx > c.cx()) {
+    spr = this.flipped_ ? this.spriteFlipped_ : this.sprite_;
+  } else {
+    spr = this.flipped_ ? this.sprite_ : this.spriteFlipped_;
+  }
+  ctx.drawImage(spr, c.x(), c.y());
 
   if (this.glowing_ > 0) {
     this.renderBoxGlow_(renderer);
   }
 };
 
-Possession.ImgHelper.ctor = function(spriteKey) {
+Possession.ImgHelper.ctor = function(spriteKey, opt_flip) {
   return function(game, x, y, mass) {
     var sprite = IMGS[spriteKey];
     var w = sprite.width;
@@ -677,23 +684,28 @@ Possession.ImgHelper.ctor = function(spriteKey) {
     var pos = new Possession(game, new geom.AABB(x - w / 2, y - h, w, h), mass);
     pos.renderImpl_ = Possession.CAT.rndr;
     pos.sprite_ = sprite;
+    pos.spriteFlipped_ = IMGS.getFlipped(spriteKey);
+    if (opt_flip) {
+      pos.flipped_ = true;
+    }
     return pos;
   };
 };
 
-Possession.ImgHelper.make = function(spriteKey) {
+Possession.ImgHelper.make = function(spriteKey, opt_flip) {
   var struct = {};
   struct.rndr = Possession.ImgHelper.rndr;
-  struct.ctor = Possession.ImgHelper.ctor(spriteKey);
+  struct.ctor = Possession.ImgHelper.ctor(spriteKey, opt_flip);
   return struct;
 };
 
 Possession.CAT = Possession.ImgHelper.make(IMG.CAT);
 Possession.DOG_SMALL = Possession.ImgHelper.make(IMG.DOG_SMALL);
 Possession.BABY = Possession.ImgHelper.make(IMG.BABY);
-Possession.DOG_LARGE = Possession.ImgHelper.make(IMG.DOG_LARGE);
+Possession.DOG_LARGE = Possession.ImgHelper.make(IMG.DOG_LARGE, true);
 Possession.PIANO = Possession.ImgHelper.make(IMG.PIANO);
 Possession.ELEPHANT = Possession.ImgHelper.make(IMG.ELEPHANT);
+Possession.WIFE = Possession.ImgHelper.make(IMG.WIFE);
 
 Possession.WEIGHTS = [
   {minMass:  0, maxMass:  5, obj: Possession.PICTURE_FRAME},
@@ -702,12 +714,16 @@ Possession.WEIGHTS = [
   {minMass:  5, maxMass: 10, obj: Possession.DOG_SMALL},
   {minMass:  5, maxMass: 15, obj: Possession.BABY},
   {minMass: 10, maxMass: 15, obj: Possession.DOG_LARGE},
+  {minMass: 10, maxMass: 25, obj: Possession.WIFE},
   {minMass: 10, maxMass: 25, obj: Possession.PIANO},
   {minMass: 15, maxMass: 35, obj: Possession.ELEPHANT}
 ];
 
+Possession.MAX_WEIGHT = 35;
+
 Possession.randomPossession = function(game, x, y, maxMass) {
   var possibles = [];
+  maxMass = Math.min(maxMass, Possession.MAX_WEIGHT);
   for (var i = Possession.WEIGHTS.length - 1; i >= 0; --i) {
     var pos = Possession.WEIGHTS[i];
     if (pos.maxMass >= maxMass && !(pos.minMass && pos.minMass >= maxMass)) {
@@ -726,7 +742,7 @@ Possession.prototype.tick = function(t) {
     this.collider_.gravityAccel(t);
     this.collider_.tick(t);
     if (Math.abs(this.vx_) + Math.abs(this.vy_) > 2) {
-      owner.acceptDelivery(this);
+      this.owner_.acceptDelivery(this);
     }
   }
   this.glowing_ -= t;
@@ -798,28 +814,24 @@ Bman = function(game, x, y, opt_facing, opt_strength) {
   this.aabb_ = new geom.AABB(x, y, this.sprite_.width, this.sprite_.height);
 };
 
-Bman.FLIPPED_ = null;
-
 Bman.Facing = {
   RIGHT: 1,
   LEFT: -1
 };
 
+Bman.prototype.getX = function() {
+  if (this.falling_) {
+    return this.falling_.cx();
+  } else {
+    return this.x_ + this.sprite_.width / 2;
+  }
+};
+
 Bman.prototype.getSprite_ = function() {
   if (this.facing_ == Bman.Facing.RIGHT) {
     return IMGS[IMG.BMAN];
-  } else if (Bman.FLIPPED_) {
-    return Bman.FLIPPED_;
   } else {
-    var spr = IMGS[IMG.BMAN];
-    var offscreen = document.createElement('canvas');
-    offscreen.width = spr.width;
-    offscreen.height = spr.height;
-    var ctx = offscreen.getContext('2d');
-    ctx.scale(-1, 1);
-    ctx.drawImage(spr, -spr.width, 0);
-    Bman.FLIPPED_ = offscreen;
-    return offscreen;
+    return IMGS.getFlipped(IMG.BMAN);
   }
 };
 
