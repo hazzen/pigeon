@@ -37,6 +37,7 @@ Game.prototype.isOver = function() {
 };
 
 Game.prototype.newGame = function(level) {
+  this.delivered = 0;
   this.level_ = level;
   this.player = new Player(this);
   this.elapsedTime_ = 0;
@@ -121,7 +122,7 @@ Game.prototype.tick = function(t) {
     }
   }
 
-  var INC_RATE_SEC = 5;
+  var INC_RATE_SEC = 30;
   var START_D = 30;
 
   if (DEBUG) {
@@ -270,14 +271,8 @@ Collider.prototype.collideOthers = function(others, t) {
           otherCollider != this) {
         var otherAabb = otherCollider.aabb;
         if (thisAabb.overlaps(otherAabb)) {
-          var tx;
-          if (dx > 0) {
-            tx = (otherAabb.p1.x - thisAabb.p2.x - EPSILON) / -dx;
-          } else {
-            tx = (otherAabb.p2.x - thisAabb.p1.x + EPSILON) / -dx;
-          }
-          ntx = Math.min(tx, ntx);
           xOthers.push(others[i]);
+          ntx = 0;
         }
       }
     }
@@ -301,13 +296,7 @@ Collider.prototype.collideOthers = function(others, t) {
           otherCollider != this) {
         var otherAabb = otherCollider.aabb;
         if (thisAabb.overlaps(otherAabb)) {
-          var ty;
-          if (dy > 0) {
-            ty = (otherAabb.p1.y - thisAabb.p2.y - EPSILON) / -dy;
-          } else {
-            ty = (otherAabb.p2.y - thisAabb.p1.y + EPSILON) / -dy;
-          }
-          nty = Math.min(ty, nty);
+          nty = 0;
           yOthers.push(others[i]);
         }
       }
@@ -463,7 +452,7 @@ Player.prototype.tick = function(t) {
   if (KB.keyDown(Keys.RIGHT)) {
     vdx += 290;
   }
-  if (KB.keyPressed(Keys.UP)) {
+  if (KB.keyPressed('s') || KB.keyPressed('a')) {
     vdy -= Player.MAX_V_Y / 2;
     this.flapAnim_ = 1;
   } else if (KB.keyDown(Keys.DOWN)) {
@@ -483,6 +472,8 @@ Player.prototype.tick = function(t) {
   var cs = this.collider_.tick(t);
 
   // Bump any item we hit if it is an up collision.
+  // Collision code sucks so this doesn't work so well.
+  /*
   for (var i = 0; i < cs.game.yOthers.length; ++i) {
     var other = cs.game.yOthers[i].asCollider();
     if (Math.abs(other.aabb.p2.y - this.collider_.aabb.p1.y) < 5) {
@@ -496,6 +487,7 @@ Player.prototype.tick = function(t) {
       }
     }
   }
+  */
 
   if (this.possession_ && !this.possession_.dead) {
     var pc = this.possession_.asCollider();
@@ -868,6 +860,7 @@ Bman.prototype.acceptDelivery = function(p) {
     this.game_.removeEnt(this, new geom.AABB(
           this.x_, this.y_, this.sprite_.width, this.sprite_.height));
     this.game_.removeEnt(p, p.asCollider().aabb);
+    this.game_.delivered += 1;
   }
   return good;
 };

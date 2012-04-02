@@ -1,5 +1,4 @@
 EPSILON = 0.001;
-DEBUG = false;
 
 UID = 1;
 UID_PROP_NAME = '__uuid_field__';

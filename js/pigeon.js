@@ -179,13 +179,17 @@ $(document).ready(function() {
         ctx.font = 'bold 12px sans-serif';
         ctx.fillStyle = '#ccc';
         ctx.fillText('Y O U   L O S E', 50, 125);
-        ctx.fillText('the world is sad', 50, 140);
+        var txt = 'the world is sad';
+        if (game.delivered) {
+          txt += ' only ' + game.delivered + (game.delivered == 1 ? ' happiness unit delivered' : ' happiness units delivered');
+        }
+        ctx.fillText(txt, 50, 140);
         ctx.fillText('press x to try to make the world happy', 50, 155);
         ctx.fillText('to make the world a happy place, make businessmen feel loved', 50, 185);
         ctx.fillText('by bringing them items from their home', 50, 200);
         ctx.fillText('this is hard becaues you are a pigeon', 50, 230);
-        ctx.fillText('left and right arrows to steer left/right', 50, 260);
-        ctx.fillText('up to flap and down to dive', 50, 275);
+        ctx.fillText('left and right arrows to steer left/right, down to dive', 50, 260);
+        ctx.fillText('a/s to flap (pound both to really fly)', 50, 275);
         ctx.fillText('z to pick up/drop items', 50, 290);
         ctx.fillText('your bird-dar lets you know of men in need and where to find their love', 50, 320);
         if (KB.keyDown('x')) {
