@@ -516,6 +516,7 @@ Player.prototype.tick = function(t) {
       this.possessionDrop();
     } else if (owner && owner.acceptDelivery(this.possession_)) {
       this.possession_ = null;
+      this.collider_.mass = 10;
     } else if (KB.keyPressed('z')) {
       this.possessionDrop();
     }
@@ -733,9 +734,6 @@ Possession.prototype.tick = function(t) {
   if (this.falling_) {
     this.collider_.gravityAccel(t);
     this.collider_.tick(t);
-    if (Math.abs(this.vx_) + Math.abs(this.vy_) > 2) {
-      this.owner_.acceptDelivery(this);
-    }
   }
   this.glowing_ -= t;
 };
